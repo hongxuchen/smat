@@ -17,7 +17,7 @@ ThisBuild / resolvers ++= Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "smatcher",
+    name := "smat",
     libraryDependencies += scalaTest % Test
   )
 

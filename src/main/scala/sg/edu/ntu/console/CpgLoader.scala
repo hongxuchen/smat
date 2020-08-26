@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters._
 object CpgLoader {
 
   lazy val defaultSemanticsFile: String = {
-    val file = Files.createTempFile("smatcher-default", ".semantics")
+    val file = Files.createTempFile("smat-default", ".semantics")
     val defaultFile = this.getClass.getClassLoader.getResource("default.semantics").toURI
 
     if (defaultFile.getScheme.contains("jar")) {

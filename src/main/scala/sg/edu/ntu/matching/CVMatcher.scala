@@ -1,5 +1,5 @@
 package sg.edu.ntu.matching
 
-class CVMatcher {
+class CVMatcher extends SMatcherT {
 
 }

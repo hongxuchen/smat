@@ -1,5 +1,5 @@
 package sg.edu.ntu.extract
 
-class CGExtract {
+class CVExtractor {
 
 }

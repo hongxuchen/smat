@@ -1,5 +1,5 @@
 package sg.edu.ntu.matching
 
-class CFGMatcher {
+class CFGMatcher extends SMatcherT {
 
 }

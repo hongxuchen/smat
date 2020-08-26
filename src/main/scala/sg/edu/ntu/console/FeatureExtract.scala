@@ -2,6 +2,8 @@ package sg.edu.ntu.console
 
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
+import sg.edu.ntu.ProjectMD
+import better.files._
 
 import scala.util.control.NonFatal
 
@@ -11,10 +13,10 @@ object FeatureExtract extends App {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
-                          outputCpgFile: String = DEFAULT_CPG_OUT_FILE,
                           enhance: Boolean = true,
                           dataFlow: Boolean = true,
                           enhanceOnly: Boolean = false,
+                          projectMD: ProjectMD = ProjectMD.DUMMY_PROJ,
                           semanticsFile: String = CpgLoader.defaultSemanticsFile,
                           sourceFileExtensions: Set[String] = Set(".c", ".cc", ".cpp", ".h", ".hpp"),
                           preprocessorConfig: PreprocessorConfig = PreprocessorConfig())
@@ -31,7 +33,17 @@ object FeatureExtract extends App {
 
   def generateCpg(config: ParserConfig): Unit = {
 
-    if (config.enhanceOnly == false) {
+    import better.files.Dsl._
+    val dbDir = pwd / DB_DIR
+    if (!dbDir.isDirectory) {
+      logger.info(s"${dbDir} not existing, creating...")
+      mkdir(dbDir)
+    }
+    val rawDB = dbDir / config.projectMD.asSmFileNam
+    val rawDBFilePath = rawDB.toString()
+    logger.info(s"output raw cpg to ${rawDB}")
+
+    if (!config.enhanceOnly) {
       val fuzzyc = new FuzzyC2Cpg()
       if (config.preprocessorConfig.usePreprocessor) {
         logger.info("running w/ fuzzyppcli")
@@ -46,12 +58,12 @@ object FeatureExtract extends App {
         )
       } else {
         logger.info("running w/o fuzzyppcli")
-        fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputCpgFile)).close()
+        fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(rawDBFilePath)).close()
       }
     }
 
     if (config.enhance) {
-      CpgEnhancer.run(config.outputCpgFile, config.dataFlow, config.semanticsFile).close()
+      CpgEnhancer.run(rawDBFilePath, config.dataFlow, config.semanticsFile).close()
     }
 
   }
@@ -63,15 +75,16 @@ object FeatureExtract extends App {
         .unbounded()
         .text("source directories containing C/C++ code")
         .action((x, c) => c.copy(inputPaths = c.inputPaths + x))
-      opt[String]("out")
-        .text("output filename")
-        .action((x, c) => c.copy(outputCpgFile = x))
       opt[Unit]("noenhance")
         .text("run language frontend but do not enhance the CPG to create an SCPG")
         .action((x, c) => c.copy(enhance = false))
       opt[Unit]("enhanceonly")
         .text("Only run the enhancer")
         .action((x, c) => c.copy(enhanceOnly = true))
+      opt[String]("proj")
+        .text("Project Metadata")
+        .required()
+        .action((x, c) => c.copy(projectMD = ProjectMD(x)))
       opt[Unit]("nodataflow")
         .text("do not perform data flow analysis")
         .action((x, c) => c.copy(dataFlow = false))

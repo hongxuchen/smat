@@ -3,22 +3,20 @@ package sg.edu.ntu.console
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
-import better.files._
 
 import scala.util.control.NonFatal
 
 
-object FeatureExtract extends App {
+object FeatureSerializer extends App {
+
+  val defaultExts = Set(".c", ".cc", ".cpp", ".h", ".hpp")
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
-                          enhance: Boolean = true,
-                          dataFlow: Boolean = true,
-                          enhanceOnly: Boolean = false,
                           projectMD: ProjectMD = ProjectMD.DUMMY_PROJ,
                           semanticsFile: String = CpgLoader.defaultSemanticsFile,
-                          sourceFileExtensions: Set[String] = Set(".c", ".cc", ".cpp", ".h", ".hpp"),
+                          sourceFileExtensions: Set[String] = defaultExts,
                           preprocessorConfig: PreprocessorConfig = PreprocessorConfig())
 
   case class PreprocessorConfig(preprocessorExecutable: String = DEFAULT_FUZZYPPCLI_PATH,
@@ -39,31 +37,25 @@ object FeatureExtract extends App {
       logger.info(s"${dbDir} not existing, creating...")
       mkdir(dbDir)
     }
-    val rawDB = dbDir / config.projectMD.asSmFileNam
+    val rawDB = dbDir / config.projectMD.asCpgFileName
     val rawDBFilePath = rawDB.toString()
     logger.info(s"output raw cpg to ${rawDB}")
 
-    if (!config.enhanceOnly) {
-      val fuzzyc = new FuzzyC2Cpg()
-      if (config.preprocessorConfig.usePreprocessor) {
-        logger.info("running w/ fuzzyppcli")
-        fuzzyc.runWithPreprocessorAndOutput(
-          config.inputPaths,
-          config.sourceFileExtensions,
-          config.preprocessorConfig.includeFiles,
-          config.preprocessorConfig.includePaths,
-          config.preprocessorConfig.defines,
-          config.preprocessorConfig.undefines,
-          config.preprocessorConfig.preprocessorExecutable
-        )
-      } else {
-        logger.info("running w/o fuzzyppcli")
-        fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(rawDBFilePath)).close()
-      }
-    }
-
-    if (config.enhance) {
-      CpgEnhancer.run(rawDBFilePath, config.dataFlow, config.semanticsFile).close()
+    val fuzzyc = new FuzzyC2Cpg()
+    if (config.preprocessorConfig.usePreprocessor) {
+      logger.info("running w/ fuzzyppcli")
+      fuzzyc.runWithPreprocessorAndOutput(
+        config.inputPaths,
+        config.sourceFileExtensions,
+        config.preprocessorConfig.includeFiles,
+        config.preprocessorConfig.includePaths,
+        config.preprocessorConfig.defines,
+        config.preprocessorConfig.undefines,
+        config.preprocessorConfig.preprocessorExecutable
+      )
+    } else {
+      logger.info("running w/o fuzzyppcli")
+      fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(rawDBFilePath)).close()
     }
 
   }
@@ -71,29 +63,20 @@ object FeatureExtract extends App {
   def parseConfig: Option[ParserConfig] =
     new scopt.OptionParser[ParserConfig](getClass.getSimpleName) {
       help("help")
-      arg[String]("<input-dir>")
+      arg[String]("<src-dir>")
         .unbounded()
         .text("source directories containing C/C++ code")
         .action((x, c) => c.copy(inputPaths = c.inputPaths + x))
-      opt[Unit]("noenhance")
-        .text("run language frontend but do not enhance the CPG to create an SCPG")
-        .action((x, c) => c.copy(enhance = false))
-      opt[Unit]("enhanceonly")
-        .text("Only run the enhancer")
-        .action((x, c) => c.copy(enhanceOnly = true))
       opt[String]("proj")
-        .text("Project Metadata")
+        .text("project metadata to be specified")
         .required()
         .action((x, c) => c.copy(projectMD = ProjectMD(x)))
-      opt[Unit]("nodataflow")
-        .text("do not perform data flow analysis")
-        .action((x, c) => c.copy(dataFlow = false))
-      opt[String]("semanticsfile")
+      opt[String]("semfile")
         .text("data flow semantics file")
         .action((x, c) => c.copy(semanticsFile = x))
-      opt[String]("source-file-ext")
+      opt[String]("src-ext")
         .unbounded()
-        .text("source file extensions to include when gathering source files. Defaults are .c, .cc, .cpp, .h and .hpp")
+        .text("source file extensions to include when gathering source files.")
         .action((pat, cfg) => cfg.copy(sourceFileExtensions = cfg.sourceFileExtensions + pat))
       opt[String]("include")
         .unbounded()
@@ -109,15 +92,15 @@ object FeatureExtract extends App {
             cfg.preprocessorConfig.copy(includePaths = cfg.preprocessorConfig.includePaths + incl)))
       opt[String]('D', "define")
         .unbounded()
-        .text("define a name")
+        .text("define a MACRO value")
         .action((d, cfg) =>
           cfg.copy(preprocessorConfig = cfg.preprocessorConfig.copy(defines = cfg.preprocessorConfig.defines + d)))
       opt[String]('U', "undefine")
         .unbounded()
-        .text("undefine a name")
+        .text("undefine a MACRO value")
         .action((u, cfg) =>
           cfg.copy(preprocessorConfig = cfg.preprocessorConfig.copy(defines = cfg.preprocessorConfig.undefines + u)))
-      opt[String]("preprocessor-executable")
+      opt[String]("pp-exe")
         .text("path to the preprocessor executable")
         .action((s, cfg) => cfg.copy(preprocessorConfig = cfg.preprocessorConfig.copy(preprocessorExecutable = s)))
       help("help").text("display this help message")

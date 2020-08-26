@@ -6,7 +6,7 @@ case class ProjectMD(proj: String, version: String) {
 
   def asCpgFileName: String = toString + RawSuffix
 
-  def asSmFileNam: String = toString + SmSuffix
+  def asSmFileName: String = toString + SmSuffix
 }
 
 object ProjectMD {

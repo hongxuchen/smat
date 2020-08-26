@@ -1,5 +1,7 @@
 target/
 /.idea
-smdb/
+SMDB/
 *.raw
 *.sm
+/*.sh
+!updateSymlinks.sh

@@ -1,6 +1,6 @@
 package sg.edu.ntu.console
 
-object SemanticMatch {
+object SemMatch {
   def main(args: Array[String]): Unit = {
 
   }

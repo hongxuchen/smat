@@ -1,4 +1,4 @@
-package sg.edu.ntu.console
+package sg.edu.ntu.smsem
 
 import java.nio.file.{FileSystems, Files, Paths}
 
@@ -8,6 +8,7 @@ import io.shiftleft.codepropertygraph.generated.EdgeTypes
 import io.shiftleft.dataflowengineoss.layers.dataflows.{OssDataFlow, OssDataFlowOptions}
 import io.shiftleft.semanticcpg.layers.LayerCreatorContext
 import overflowdb.OdbConfig
+import scala.jdk.CollectionConverters._
 
 object CpgLoader {
 
@@ -24,9 +25,9 @@ object CpgLoader {
   }
 
   /**
-    * Apply data flow semantics from `semanticsFilenameOpt` to `cpg`. If `semanticsFilenameOpt`
-    * is omitted or None, default semantics will be applied.
-    **/
+   * Apply data flow semantics from `semanticsFilenameOpt` to `cpg`. If `semanticsFilenameOpt`
+   * is omitted or None, default semantics will be applied.
+   **/
   def applySemantics(cpg: Cpg, semanticsFilenameOpt: Option[String] = None): Unit = {
     if (semanticsFilenameOpt.isDefined) {
       removeAllSemantics(cpg)
@@ -38,9 +39,9 @@ object CpgLoader {
   }
 
   /**
-    * Undo `applySemantics`. This method is O(n) in the number of edges,
-    * and single threaded, so consider it may take a bit for large graphs.
-    **/
+   * Undo `applySemantics`. This method is O(n) in the number of edges,
+   * and single threaded, so consider it may take a bit for large graphs.
+   **/
   def removeAllSemantics(cpg: Cpg): Unit = {
     val edgeTypesToRemove = Set(EdgeTypes.PROPAGATE, EdgeTypes.REACHING_DEF)
     // TODO Replace with call to generic DiffGraph unapply methods once available
@@ -52,11 +53,11 @@ object CpgLoader {
   }
 
   /**
-    * Load code property graph
-    *
-    * @param filename      name of the file that stores the cpg
-    * @param storeFilename if unequal non-empty - location of ODB store
-    **/
+   * Load code property graph
+   *
+   * @param filename      name of the file that stores the cpg
+   * @param storeFilename if unequal non-empty - location of ODB store
+   **/
   def load(filename: String, storeFilename: String = ""): Cpg = {
     val config = if (storeFilename != "") {
       val odbConfig = OdbConfig.withDefaults().withStorageLocation(storeFilename)
@@ -68,10 +69,10 @@ object CpgLoader {
   }
 
   /**
-    * Load code property graph from overflowDB and apply semantics
-    *
-    * @param filename name of the file that stores the cpg
-    **/
+   * Load code property graph from overflowDB and apply semantics
+   *
+   * @param filename name of the file that stores the cpg
+   **/
   def loadFromOdb(filename: String): Cpg = {
     val odbConfig = OdbConfig.withDefaults().withStorageLocation(filename)
     val config = CpgLoaderConfig().withOverflowConfig(odbConfig).doNotCreateIndexesOnLoad

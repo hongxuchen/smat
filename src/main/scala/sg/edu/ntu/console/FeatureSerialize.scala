@@ -6,6 +6,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.{FuzzyC2Cpg, SourceFiles}
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.smsem.CpgLoader
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
@@ -25,7 +26,7 @@ object FeatureSerialize {
                           ppConfig: PPConfig = PPConfig()
                          )
 
-  case class PPConfig(preprocessorExecutable: String = DEFAULT_FUZZYPPCLI,
+  case class PPConfig(ppExec: String = DEFAULT_FUZZYPPCLI,
                       verbose: Boolean = true,
                       includeFiles: Set[String] = Set.empty,
                       includePaths: Set[String] = Set.empty,
@@ -39,8 +40,7 @@ object FeatureSerialize {
         undefines.nonEmpty
   }
 
-  def runPP(fuzzyC2Cpg: FuzzyC2Cpg,
-            sourcePaths: Set[String],
+  def runPP(sourcePaths: Set[String],
             srcExts: Set[String],
             includeFiles: Set[String],
             includePaths: Set[String],
@@ -85,10 +85,10 @@ object FeatureSerialize {
   }
 
   /**
-    *
-    * @param config parse config
-    * @return an active `Cpg` to be used (need closing before exiting)
-    */
+   *
+   * @param config parse config
+   * @return an active `Cpg` to be used (need closing before exiting)
+   */
   def generateCpg(config: ParserConfig): Cpg = {
 
     import better.files.Dsl._
@@ -117,14 +117,13 @@ object FeatureSerialize {
     if (config.ppConfig.usePP) {
       logger.info("running w/ fuzzyppcli")
       val (exitCode, ppPath) = runPP(
-        fuzzyc,
         config.inputPaths,
         config.srcExts,
         config.ppConfig.includeFiles,
         config.ppConfig.includePaths,
         config.ppConfig.defines,
         config.ppConfig.undefines,
-        config.ppConfig.preprocessorExecutable,
+        config.ppConfig.ppExec,
       )
       if (exitCode == 0) {
         val cpg = fuzzyc.runAndOutput(Set(ppPath.toString), config.srcExts, None)
@@ -180,7 +179,7 @@ object FeatureSerialize {
           cfg.copy(ppConfig = cfg.ppConfig.copy(defines = cfg.ppConfig.undefines + u)))
       opt[String]("pp-exe")
         .text("path to the preprocessor executable")
-        .action((s, cfg) => cfg.copy(ppConfig = cfg.ppConfig.copy(preprocessorExecutable = s)))
+        .action((s, cfg) => cfg.copy(ppConfig = cfg.ppConfig.copy(ppExec = s)))
       help("help").text("display this help message")
     }.parse(args, ParserConfig())
 

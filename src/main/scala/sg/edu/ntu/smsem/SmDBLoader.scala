@@ -1,6 +1,4 @@
-package sg.edu.ntu.console
-
-import sg.edu.ntu.smsem.SMItem
+package sg.edu.ntu.smsem
 
 object SmDBLoader {
 

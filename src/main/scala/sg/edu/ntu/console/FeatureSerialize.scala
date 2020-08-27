@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 
-object FeatureSerializer extends App {
+object FeatureSerialize {
 
   val defaultExts = Set(".c", ".cc", ".cpp", ".h", ".hpp")
 
@@ -22,16 +22,21 @@ object FeatureSerializer extends App {
                           srcExts: Set[String] = defaultExts,
                           forceUpdateCPG: Boolean = false,
                           forceUpdateSM: Boolean = false,
-                          ppConfig: PreprocessorConfig = PreprocessorConfig())
+                          ppConfig: PPConfig = PPConfig()
+                         )
 
-  case class PreprocessorConfig(preprocessorExecutable: String = DEFAULT_FUZZYPPCLI,
-                                verbose: Boolean = true,
-                                includeFiles: Set[String] = Set.empty,
-                                includePaths: Set[String] = Set.empty,
-                                defines: Set[String] = Set.empty,
-                                undefines: Set[String] = Set.empty) {
-    val usePreprocessor: Boolean =
-      includeFiles.nonEmpty || includePaths.nonEmpty || defines.nonEmpty || undefines.nonEmpty
+  case class PPConfig(preprocessorExecutable: String = DEFAULT_FUZZYPPCLI,
+                      verbose: Boolean = true,
+                      includeFiles: Set[String] = Set.empty,
+                      includePaths: Set[String] = Set.empty,
+                      defines: Set[String] = Set.empty,
+                      undefines: Set[String] = Set.empty
+                     ) {
+    val usePP: Boolean =
+      includeFiles.nonEmpty ||
+        includePaths.nonEmpty ||
+        defines.nonEmpty ||
+        undefines.nonEmpty
   }
 
   def runPP(fuzzyC2Cpg: FuzzyC2Cpg,
@@ -89,7 +94,7 @@ object FeatureSerializer extends App {
     import better.files.Dsl._
     val dbDir = pwd / DB_DIR
     if (!dbDir.isDirectory) {
-      logger.info(s"${dbDir} not existing, creating...")
+      logger.info(s"${dbDir} not exists, creating...")
       mkdir(dbDir)
     }
     val rawDB = dbDir / config.projectMD.asCpgFileName
@@ -109,7 +114,7 @@ object FeatureSerializer extends App {
     logger.info(s"output raw cpg to ${rawDBFilePath}")
 
     val fuzzyc = new FuzzyC2Cpg()
-    if (config.ppConfig.usePreprocessor) {
+    if (config.ppConfig.usePP) {
       logger.info("running w/ fuzzyppcli")
       val (exitCode, ppPath) = runPP(
         fuzzyc,
@@ -122,7 +127,7 @@ object FeatureSerializer extends App {
         config.ppConfig.preprocessorExecutable,
       )
       if (exitCode == 0) {
-        val cpg = fuzzyc.runAndOutput(Set(ppPath), config.srcExts, None)
+        val cpg = fuzzyc.runAndOutput(Set(ppPath.toString), config.srcExts, None)
         cpg
       } else {
         val cpg = fuzzyc.runAndOutput(config.inputPaths, config.srcExts, Some(rawDBFilePath))
@@ -136,7 +141,7 @@ object FeatureSerializer extends App {
 
   }
 
-  def parseConfig: Option[ParserConfig] =
+  def parseConfig(args: Array[String]): Option[ParserConfig] =
     new scopt.OptionParser[ParserConfig](getClass.getSimpleName) {
       help("help")
       arg[String]("<src-dir>")
@@ -179,15 +184,18 @@ object FeatureSerializer extends App {
       help("help").text("display this help message")
     }.parse(args, ParserConfig())
 
-  parseConfig.foreach { config =>
-    try {
-      generateCpg(config)
-    } catch {
-      case NonFatal(ex) => {
-        logger.error("failed to enhance CPG", ex)
+  def main(args: Array[String]): Unit = {
+    val confOpt = parseConfig(args);
+    confOpt.foreach { config =>
+      try {
+        val cpg = generateCpg(config)
+      } catch {
+        case NonFatal(ex) => {
+          logger.error("error when generating CPG/SMDB", ex)
+        }
       }
-    }
 
+    }
   }
 
 }

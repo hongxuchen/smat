@@ -5,3 +5,4 @@ SMDB/
 *.sm
 /*.sh
 !updateSymlinks.sh
+venv/

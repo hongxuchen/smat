@@ -6,7 +6,8 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.{FuzzyC2Cpg, SourceFiles}
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.smsem.CpgLoader
+import sg.edu.ntu.io.CpgLoader
+import sg.edu.ntu.smsem.SExtract
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
@@ -85,10 +86,10 @@ object FeatureSerialize {
   }
 
   /**
-   *
-   * @param config parse config
-   * @return an active `Cpg` to be used (need closing before exiting)
-   */
+    *
+    * @param config parse config
+    * @return an active `Cpg` to be used (need closing before exiting)
+    */
   def generateCpg(config: ParserConfig): Cpg = {
 
     import better.files.Dsl._
@@ -172,6 +173,12 @@ object FeatureSerialize {
         .text("define a MACRO value")
         .action((d, cfg) =>
           cfg.copy(ppConfig = cfg.ppConfig.copy(defines = cfg.ppConfig.defines + d)))
+      opt[Unit]("force-update-cpg")
+        .text("force update cpg")
+        .action((x, c) => c.copy(forceUpdateCPG = true))
+      opt[Unit]("force-update-smdb")
+        .text("force update SMDB")
+        .action((x, c) => c.copy(forceUpdateSM = true))
       opt[String]('U', "undefine")
         .unbounded()
         .text("undefine a MACRO value")
@@ -188,6 +195,12 @@ object FeatureSerialize {
     confOpt.foreach { config =>
       try {
         val cpg = generateCpg(config)
+        logger.info(s"analyze ${config.projectMD}")
+        try {
+          SExtract.analyze(config.projectMD, cpg)
+        } finally {
+          cpg.close()
+        }
       } catch {
         case NonFatal(ex) => {
           logger.error("error when generating CPG/SMDB", ex)

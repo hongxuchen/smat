@@ -8,12 +8,23 @@ import sg.edu.ntu.ProjectMD
 final class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   def getFuncs: List[Method] = {
-    val methodList = cpg.method.l
-    println(s"${projectMD}")
+    logger.info(s"==> analyzing ${projectMD}")
+    val methods = cpg.method.l
+    println(methods.size)
+    for (method <- methods) {
+      val dotStr = MethodAnalyzer.toDot(method.graph())
+      println(dotStr)
+    }
+    val methodList = cpg.method.name.l
     for (method <- methodList) {
-      print(s"${method}\t")
+      println(s"${method}\t")
+    }
+    val callList = cpg.call.l()
+    for (call <- callList) {
+      println(s"${call.name}")
     }
     methodList
+    ???
   }
 
 }

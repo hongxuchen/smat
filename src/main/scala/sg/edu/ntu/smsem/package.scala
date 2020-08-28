@@ -10,6 +10,7 @@ package object smsem {
   abstract class SMSem() {
   }
 
+
   val logger = LoggerFactory.getLogger(this.getClass)
 
 }

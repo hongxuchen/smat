@@ -1,4 +1,6 @@
-package sg.edu.ntu.smsem
+package sg.edu.ntu.io
+
+import sg.edu.ntu.smsem.SMItem
 
 object SmDBLoader {
 

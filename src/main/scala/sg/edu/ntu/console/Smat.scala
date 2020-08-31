@@ -6,6 +6,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.{FuzzyC2Cpg, SourceFiles}
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.console.PPConfig.runPP
 import sg.edu.ntu.io.CpgLoader
 import sg.edu.ntu.smsem.SExtract
 
@@ -13,77 +14,20 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 
-object FeatureSerialize {
+object Smat {
 
   val defaultExts = Set(".c", ".cc", ".cpp", ".h", ".hpp")
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
+                          semMatch: Boolean = false,
                           projectMD: ProjectMD = ProjectMD.DUMMY_PROJ,
                           srcExts: Set[String] = defaultExts,
                           forceUpdateCPG: Boolean = false,
                           forceUpdateSM: Boolean = false,
                           ppConfig: PPConfig = PPConfig()
                          )
-
-  case class PPConfig(ppExec: String = DEFAULT_FUZZYPPCLI,
-                      verbose: Boolean = true,
-                      includeFiles: Set[String] = Set.empty,
-                      includePaths: Set[String] = Set.empty,
-                      defines: Set[String] = Set.empty,
-                      undefines: Set[String] = Set.empty
-                     ) {
-    val usePP: Boolean =
-      includeFiles.nonEmpty ||
-        includePaths.nonEmpty ||
-        defines.nonEmpty ||
-        undefines.nonEmpty
-  }
-
-  def runPP(sourcePaths: Set[String],
-            srcExts: Set[String],
-            includeFiles: Set[String],
-            includePaths: Set[String],
-            defs: Set[String],
-            undefs: Set[String],
-            ppExec: String): (Int, Path) = {
-    // Create temp dir to store preprocessed source.
-    val ppPath = Files.createTempDirectory("fuzzyc2cpg_pp_")
-    logger.info(s"Writing preprocessed files to [$ppPath]")
-
-    val ppLogFile = Files.createTempFile("fuzzyc2cpg_pp_log", ".txt").toFile
-    logger.info(s"Writing preprocessor logs to [$ppLogFile]")
-
-    val sourceFileNames = SourceFiles.determine(sourcePaths, srcExts)
-
-    val commandBuffer = new ListBuffer[String]()
-    commandBuffer.appendAll(List(ppExec, "--verbose", "-o", ppPath.toString))
-    if (sourceFileNames.nonEmpty) commandBuffer.appendAll(List("-f", sourceFileNames.mkString(",")))
-    if (includeFiles.nonEmpty) commandBuffer.appendAll(List("--include", includeFiles.mkString(",")))
-    if (includePaths.nonEmpty) commandBuffer.appendAll(List("-I", includePaths.mkString(",")))
-    if (defs.nonEmpty) commandBuffer.appendAll(List("-D", defs.mkString(",")))
-    if (undefs.nonEmpty) commandBuffer.appendAll(List("-U", defs.mkString(",")))
-
-    val cmd = commandBuffer.toList
-
-    // Run preprocessor
-    logger.info("Running preprocessor...")
-    val process = new ProcessBuilder()
-      .redirectOutput(ppLogFile)
-      .redirectError(ppLogFile)
-      .command(cmd: _*)
-      .start()
-    val exitCode = process.waitFor()
-
-    if (exitCode == 0) {
-      logger.info(s"Preprocessing complete, files written to [$ppPath], starting CPG generation...")
-    } else {
-      logger.error(
-        s"Error occurred whilst running preprocessor. Log written to [$ppLogFile]. rc=[$exitCode]; analyzing w/o pp")
-    }
-    (exitCode, ppPath)
-  }
 
   /**
     *
@@ -187,6 +131,9 @@ object FeatureSerialize {
       opt[String]("pp-exe")
         .text("path to the preprocessor executable")
         .action((s, cfg) => cfg.copy(ppConfig = cfg.ppConfig.copy(ppExec = s)))
+      opt[Unit]('M', "match")
+        .text("flag to indicate a semantic match procedure")
+        .action((_, c) => c.copy(semMatch = true))
       help("help").text("display this help message")
     }.parse(args, ParserConfig())
 
@@ -198,6 +145,9 @@ object FeatureSerialize {
         logger.info(s"analyze ${config.projectMD}")
         try {
           SExtract.analyze(config.projectMD, cpg)
+          if (config.semMatch) {
+            logger.info(s"proceed with semantic matching against ${config.projectMD}")
+          }
         } finally {
           cpg.close()
         }

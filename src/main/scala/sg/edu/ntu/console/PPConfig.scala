@@ -4,7 +4,6 @@ import java.nio.file.{Files, Path}
 
 import io.shiftleft.fuzzyc2cpg.SourceFiles
 import org.slf4j.LoggerFactory
-import sg.edu.ntu.console.Smat.logger
 
 import scala.collection.mutable.ListBuffer
 

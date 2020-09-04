@@ -68,11 +68,6 @@ object CpgLoader {
     io.shiftleft.codepropertygraph.cpgloading.CpgLoader.load(filename, config)
   }
 
-  /**
-    * Load code property graph from overflowDB and apply semantics
-    *
-    * @param filename name of the file that stores the cpg
-    **/
   def loadFromOdb(filename: String): Cpg = {
     val odbConfig = OdbConfig.withDefaults().withStorageLocation(filename)
     val config = CpgLoaderConfig().withOverflowConfig(odbConfig).doNotCreateIndexesOnLoad

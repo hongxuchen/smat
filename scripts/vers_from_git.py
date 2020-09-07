@@ -11,6 +11,7 @@ import shutil
 recent_releases = 10
 record_file = "versions.txt"
 
+
 # input: in_dir with a few git projects
 # outpout: out_dir/proj/versions
 
@@ -87,8 +88,8 @@ def get_repo_maps(indir, outdir):
             repo_maps[in_repo] = out_repo
     return repo_maps
 
-def config_logger():
 
+def config_logger():
     logger = logging.getLogger()
     handler = logging.StreamHandler()
     # formatter = logging.Formatter('%(levelname)-6s %(message)s')
@@ -104,11 +105,13 @@ def main():
     repo_maps = get_repo_maps(args.indir, args.outdir)
     for (in_repo, out_repo) in repo_maps.items():
         try:
+            print(f"\nanalyzing {in_repo}")
             repo = Repo(in_repo)
             sorted_tags = get_git_sorted_tags(repo)
             copy_releases(repo, sorted_tags, out_repo)
         except GitError as e:
             print("Exception on {}, {}".format(in_repo, type(e)))
+
 
 logger = config_logger()
 main()

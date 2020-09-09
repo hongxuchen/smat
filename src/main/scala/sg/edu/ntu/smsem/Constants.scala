@@ -1,6 +1,6 @@
 package sg.edu.ntu.smsem
 
-object Utils {
+object Constants {
 
   // Find more information at http://www.makelinux.net/ldd3/ (Chapter 3)
   // and https://www.kernel.org/doc/html/latest/core-api/mm-api.html

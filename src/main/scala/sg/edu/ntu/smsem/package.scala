@@ -1,16 +1,23 @@
 package sg.edu.ntu
 
-import io.shiftleft.codepropertygraph.Cpg
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 package object smsem {
 
-  case class SMInfo(projectMD: ProjectMD, cpg: Cpg)
+  val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  abstract class SMSem() {
+  def optStr[A](optV: Option[A], defaultStr: String = "NA"): String = {
+    optV match {
+      case Some(v) => v.toString
+      case None => defaultStr
+    }
   }
 
-
-  val logger = LoggerFactory.getLogger(this.getClass)
+  /**
+    * abstract class to provide semantics for semantic matching
+    */
+  abstract class SMSem() {
+    def dumpAll(): Unit
+  }
 
 }

@@ -5,7 +5,7 @@ import io.shiftleft.codepropertygraph.generated.nodes.Method
 import io.shiftleft.semanticcpg.language.toNodeTypeStarters
 import sg.edu.ntu.ProjectMD
 
-final class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
+final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   def getFuncs: List[Method] = {
     logger.info(s"==> analyzing ${projectMD}")
@@ -15,7 +15,7 @@ final class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
       val dotStr = MethodAnalyzer.toDot(method.graph())
       println(dotStr)
     }
-    val methodList = cpg.method.name.l
+    val methodList = cpg.method.l
     for (method <- methodList) {
       println(s"${method}\t")
     }
@@ -24,7 +24,9 @@ final class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
       println(s"${call.name}")
     }
     methodList
-    ???
   }
 
+  override def dumpAll(): Unit = {
+    println(s"=== inter info for ${projectMD} ===")
+  }
 }

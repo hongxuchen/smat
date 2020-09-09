@@ -2,16 +2,17 @@ package sg.edu.ntu.smsem
 
 import java.nio.file.Paths
 
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeTypes, nodes}
-import io.shiftleft.codepropertygraph.generated.nodes.{Block, Call, ControlStructure, Expression, Method, Return}
-import org.apache.tinkerpop.gremlin.structure.Vertex
-import overflowdb.Node
-import overflowdb._
+import io.shiftleft.codepropertygraph.Cpg
+import io.shiftleft.codepropertygraph.generated.{nodes, _}
+import io.shiftleft.codepropertygraph.generated.nodes.Method
+import io.shiftleft.semanticcpg.dotgenerator.{DotCfgGenerator, Shared}
+import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
+import io.shiftleft.semanticcpg.language._
+import overflowdb.{Node, _}
 import overflowdb.traversal._
-import io.shiftleft.Implicits.JavaIteratorDeco
-import io.shiftleft.codepropertygraph.generated._
+import sg.edu.ntu.ProjectMD
 
-import scala.annotation.tailrec
+import scala.jdk.CollectionConverters._
 
 object MethodAnalyzer {
 
@@ -45,12 +46,75 @@ object MethodAnalyzer {
     }
     buf.toString
   }
+
+  /**
+    * taken from `DotCfgGenerator`
+    *
+    * @param v
+    * @return
+    */
+  def expandedStoredNodes(v: nodes.StoredNode): Iterator[Edge] = {
+    v._cfgOut()
+      .asScala
+      .filter(_.isInstanceOf[nodes.StoredNode])
+      .map(node => Edge(v, node))
+  }
+
+  /**
+    * taken from `DotAstGenerator`
+    *
+    * @param astRoot
+    * @return
+    */
+  def nodesAndEdges(astRoot: nodes.AstNode): List[String] = {
+
+    def shouldBeDisplayed(v: nodes.AstNode): Boolean = !v.isInstanceOf[nodes.MethodParameterOut]
+
+    val vertices = astRoot.ast.where(shouldBeDisplayed).l
+    val edges = vertices.map(v => (v.id2, v.start.astChildren.where(shouldBeDisplayed).id.l))
+
+    val nodeStrings = vertices.map { node =>
+      s""""${node.id2}" [label = "${Shared.stringRepr(node)}" ]""".stripMargin
+    }
+
+    val edgeStrings = edges.flatMap {
+      case (id, childIds) =>
+        childIds.map(childId => s"""  "$id" -> "$childId"  """)
+    }
+
+    nodeStrings ++ edgeStrings
+  }
+
 }
 
-class MethodAnalyzer(method: Method) {
 
-}
+final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
-final class InnerFuncSem extends SMSem {
+  val methodList: List[Method] = cpg.method.l
+
+  def getCfg(method: Method): String = {
+    Shared.dotGraph(method, MethodAnalyzer.expandedStoredNodes, DotCfgGenerator.cfgNodeShouldBeDisplayed)
+  }
+
+  def getAst(method: Method): String = {
+    val sb = Shared.namedGraphBegin(method)
+    sb.append(MethodAnalyzer.nodesAndEdges(method).mkString("\n"))
+    Shared.graphEnd(sb)
+  }
+
+  def dumpInfo(m: Method, index: Option[Integer]): Unit = {
+
+    println(s"${optStr(index, "")} ${m.fullName}: isExernal:${m.isExternal}," +
+      s" sig: ${m.signature}, " +
+      s"pos: [(${optStr(m.lineNumber)},${optStr(m.columnNumber)}),(${optStr(m.lineNumberEnd)}, ${optStr(m.columnNumberEnd)})]")
+    //    println(s"cfg:\n${getCfg(m)}\nast:\n${getAst(m)}")
+  }
+
+  def dumpAll(): Unit = {
+    println(s"=== inner info for ${projectMD} ===")
+    for ((m, i) <- methodList.zipWithIndex) {
+      dumpInfo(m, Some(i))
+    }
+  }
 
 }

@@ -1,16 +1,34 @@
 package sg.edu.ntu.smsem
 
+import io.shiftleft.codepropertygraph.Cpg
 import sg.edu.ntu.ProjectMD
 
-case class SMItem(projectMD: ProjectMD, var sems: List[SMSem]) {
+import scala.collection.mutable.ListBuffer
+
+class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) {
 
   def appendSem(sem: SMSem): Unit = {
     logger.info(s"adding ${sem.getClass} to ${projectMD}")
-    sems.appended(sem)
+    sems.append(sem)
+  }
+
+  def analyze(): Unit = {
+    for (sem <- sems) {
+      sem.dumpAll()
+    }
   }
 
 }
 
 object SMItem {
-
+  def apply(projectMD: ProjectMD, cpg: Cpg): SMItem = {
+    val smItem = new SMItem(projectMD, ListBuffer.empty)
+    val innerSem = InnerFuncSem(projectMD, cpg)
+    smItem.appendSem(innerSem)
+    val interSem = InterFuncSem(projectMD, cpg)
+    smItem.appendSem(interSem)
+    val cVarSem = CVarSem(projectMD, cpg)
+    smItem.appendSem(cVarSem)
+    smItem
+  }
 }

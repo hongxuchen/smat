@@ -107,6 +107,9 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
     println(s"${optStr(index, "")} ${m.fullName}: isExernal:${m.isExternal}," +
       s" sig: ${m.signature}, " +
       s"pos: [(${optStr(m.lineNumber)},${optStr(m.columnNumber)}),(${optStr(m.lineNumberEnd)}, ${optStr(m.columnNumberEnd)})]")
+//    val methodSteps = new Steps(m)
+//    dumpToFile(getCfg(m), projectMD.toString, m.fullName, "cfg")
+//    dumpToFile(getAst(m), projectMD.toString, m.fullName, "ast")
     //    println(s"cfg:\n${getCfg(m)}\nast:\n${getAst(m)}")
   }
 

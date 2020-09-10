@@ -42,5 +42,6 @@ libraryDependencies ++= Seq(
   "io.shiftleft" %% "fuzzyc2cpg" % Fuzzyc2cpgVersion,
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.9.0",
   "org.apache.commons" % "commons-text" % "1.9",
+  "com.github.haifengl" %% "smile-scala" % "2.5.2",
   "org.scalatest" %% "scalatest" % ScalatestVersion % Test
 )

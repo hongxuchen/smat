@@ -1,4 +1,4 @@
-package sg.edu.ntu.io
+package sg.edu.ntu.serde
 
 import java.nio.file.{FileSystems, Files, Paths}
 

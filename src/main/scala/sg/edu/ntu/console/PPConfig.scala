@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
-case class PPConfig(ppExec: String = DEFAULT_FUZZYPPCLI,
+case class PPConfig(ppExec: String = PPConfig.DEFAULT_FUZZYPPCLI,
                     verbose: Boolean = true,
                     includeFiles: Set[String] = Set.empty,
                     includePaths: Set[String] = Set.empty,
@@ -22,6 +22,8 @@ case class PPConfig(ppExec: String = DEFAULT_FUZZYPPCLI,
 }
 
 object PPConfig {
+
+  val DEFAULT_FUZZYPPCLI: String = "/usr/bin/fuzzyppcli"
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 

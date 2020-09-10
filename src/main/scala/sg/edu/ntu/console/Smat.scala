@@ -5,7 +5,7 @@ import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
 import sg.edu.ntu.console.PPConfig.runPP
-import sg.edu.ntu.io.{CpgLoader, SmDBLoader}
+import sg.edu.ntu.serde.{CpgLoader, SmDBLoader, Utils}
 import sg.edu.ntu.smsem.SMItem
 
 import scala.util.control.NonFatal
@@ -33,22 +33,21 @@ object Smat {
     */
   def generateCpg(config: ParserConfig): Cpg = {
 
-    val dbDir = getDBDir
-    val rawDB = dbDir / config.projectMD.asCpgFileName
-    val rawDBFileName = rawDB.toString()
+    val cpgDB = Utils.getCpgDBPath(config.projectMD)
+    val cpgDBPathStr = cpgDB.toString()
 
-    if (rawDB.exists) {
+    if (cpgDB.exists) {
       // if both cpg and smdb are not forced to update, do nothing
       if (!config.forceUpdateCPG && !config.forceUpdateSM) {
-        logger.info(s"$rawDB exists, do nothing")
-        val cpg = CpgLoader.loadFromOdb(rawDBFileName)
+        logger.info(s"$cpgDB exists, do nothing")
+        val cpg = CpgLoader.loadFromOdb(cpgDBPathStr)
         return cpg
       } else {
-        logger.info(s"${rawDB} force updating cpg")
+        logger.info(s"${cpgDB} force updating cpg")
       }
     }
 
-    logger.info(s"output raw cpg to ${rawDBFileName}")
+    logger.info(s"output raw cpg to ${cpgDBPathStr}")
 
     val fuzzyc = new FuzzyC2Cpg()
     if (config.ppConfig.usePP) {
@@ -66,12 +65,12 @@ object Smat {
         val cpg = fuzzyc.runAndOutput(Set(ppPath.toString), config.srcExts, None)
         cpg
       } else {
-        val cpg = fuzzyc.runAndOutput(config.inputPaths, config.srcExts, Some(rawDBFileName))
+        val cpg = fuzzyc.runAndOutput(config.inputPaths, config.srcExts, Some(cpgDBPathStr))
         cpg
       }
     } else {
       logger.info("running w/o fuzzyppcli")
-      val cpg = fuzzyc.runAndOutput(config.inputPaths, config.srcExts, Some(rawDBFileName))
+      val cpg = fuzzyc.runAndOutput(config.inputPaths, config.srcExts, Some(cpgDBPathStr))
       cpg
     }
 
@@ -82,16 +81,15 @@ object Smat {
     * @return an instance of `SMItem` for future usage
     */
   def generateSMDB(config: ParserConfig, cpg: Cpg): SMItem = {
-    val dbDir = getDBDir
-    val smdbFile = dbDir / config.projectMD.asSmFileName
-    val smdbFileName = smdbFile.toString()
-    if (smdbFile.exists) {
+    val smdbPath = Utils.getSMDBPath(config.projectMD)
+    val smdbFileName = smdbPath.toString()
+    if (smdbPath.exists) {
       if (!config.forceUpdateSM) {
-        logger.info(s"${smdbFile} exists, do nothing")
+        logger.info(s"${smdbFileName} exists, do nothing")
         val smItem = SmDBLoader.loadFromSMDB(smdbFileName)
         return smItem
       } else {
-        logger.info(s"${smdbFile} force updating smdb")
+        logger.info(s"${smdbFileName} force updating smdb")
       }
     }
     val smItem = SMItem(config.projectMD, cpg)

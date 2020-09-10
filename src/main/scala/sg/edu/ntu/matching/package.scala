@@ -4,8 +4,6 @@ package object matching {
 
   type ProjSimMap = Map[ProjectMD, Similarity]
 
-  trait SMatcherT
-
   object Similarity {
     def weightGen(len: Int): List[Double] = {
       val d = Range(1, len + 1).foldLeft(0.0d)((acc, cur) => acc + 1.0 / cur.toDouble)

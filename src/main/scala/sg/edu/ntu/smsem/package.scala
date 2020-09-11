@@ -7,6 +7,8 @@ import org.slf4j.{Logger, LoggerFactory}
 
 package object smsem {
 
+  type FeatureTy = Integer
+
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   def optStr[A](optV: Option[A], defaultStr: String = "NA"): String = {
@@ -40,6 +42,9 @@ package object smsem {
     * abstract class to provide semantics for semantic matching
     */
   abstract class SMSem() {
+
+    def collectFeatures(): Unit
+
     def dumpAll(): Unit
   }
 

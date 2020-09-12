@@ -4,7 +4,6 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.console.PPConfig.runPP
 import sg.edu.ntu.serde.{CpgLoader, SmDBLoader, Utils}
 import sg.edu.ntu.smsem.SMItem
 
@@ -52,7 +51,7 @@ object Smat {
     val fuzzyc = new FuzzyC2Cpg()
     if (config.ppConfig.usePP) {
       logger.info("running w/ fuzzyppcli")
-      val (exitCode, ppPath) = runPP(
+      val (exitCode, ppPath) = PPConfig.runPP(
         config.inputPaths,
         config.srcExts,
         config.ppConfig.includeFiles,

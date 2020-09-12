@@ -21,6 +21,8 @@ lazy val root = (project in file("."))
     libraryDependencies += scalaTest % Test
   )
 
+scalacOptions ++= Seq("-unchecked", "-deprecation")
+
 val ScoptVersion = "3.7.1"
 val BetterFilesVersion = "3.8.0"
 val CirceVersion = "0.12.2"

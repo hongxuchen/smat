@@ -2,16 +2,23 @@ package sg.edu.ntu.smsem
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
-import io.shiftleft.semanticcpg.language.toNodeTypeStarters
+import io.shiftleft.semanticcpg.language._
 import sg.edu.ntu.ProjectMD
 
 /**
   * this class stores the coarse grained features across functions
   * finally the semantic is a 1-dimention vector
+  *
   * @param projectMD
   * @param cpg
   */
 final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
+
+  def getConstFuncs: List[Method] = {
+    cpg.method.internal.where { m =>
+      !m.signature.contains("const") && MethodAnalyzer.callOutsAreConst(m) && MethodAnalyzer.parameterOpsAreConst(m)
+    }.toList()
+  }
 
   def getFuncs: List[Method] = {
     logger.info(s"==> analyzing ${projectMD}")

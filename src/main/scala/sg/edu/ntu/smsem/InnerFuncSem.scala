@@ -1,99 +1,28 @@
 package sg.edu.ntu.smsem
 
-import java.nio.file.Paths
-
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.{nodes, _}
 import io.shiftleft.codepropertygraph.generated.nodes.Method
 import io.shiftleft.semanticcpg.dotgenerator.{DotCfgGenerator, Shared}
-import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
 import io.shiftleft.semanticcpg.language._
-import overflowdb.{Node, _}
-import overflowdb.traversal._
 import sg.edu.ntu.ProjectMD
 
-import scala.jdk.CollectionConverters._
+import scala.collection.mutable.ListBuffer
 
-object MethodAnalyzer {
+class MethodSem(m: Method) {
 
-  /** Some helper functions: adapted from ReachingDefPass.scala in codeproperty graph repo */
-  def vertexToStr(vertex: Node): String = {
-    try {
-      val methodVertex = vertex.in("CONTAINS").next
-      val fileName = methodVertex.in("CONTAINS").next match {
-        case file: nodes.File => file.asInstanceOf[nodes.File].name
-        case _ => "NA"
-      }
+  val stdlibCallees: Set[String] = MethodAnalyzer.callees(m, Utils.stdlibCalls)
 
-      s"${Paths.get(fileName).getFileName.toString}: ${vertex.property(NodeKeysOdb.LINE_NUMBER)} ${vertex.property(NodeKeysOdb.CODE)}"
-    } catch {
-      case e: Exception => {
-        logger.warn(s"${e.getMessage}")
-        ""
-      }
-    }
-  }
+  val kernelUserCallees: Set[String] = MethodAnalyzer.callees(m, Utils.linuxKernlUserCalls)
 
-  def toDot(graph: OdbGraph): String = {
-    val buf = new StringBuffer()
-
-    buf.append("digraph g {\n node[shape=plaintext];\n")
-
-    graph.edges("CFG").l.foreach { e =>
-      val inV = vertexToStr(e.inNode).replace("\"", "\'")
-      val outV = vertexToStr(e.outNode).replace("\"", "\'")
-      buf.append(s""" "$outV" -> "$inV";\n """)
-    }
-    buf.append {
-      "}"
-    }
-    buf.toString
-  }
-
-  /**
-    * taken from `DotCfgGenerator`
-    *
-    * @param v
-    * @return
-    */
-  def expandedStoredNodes(v: nodes.StoredNode): Iterator[Edge] = {
-    v._cfgOut()
-      .asScala
-      .filter(_.isInstanceOf[nodes.StoredNode])
-      .map(node => Edge(v, node))
-  }
-
-  /**
-    * taken from `DotAstGenerator`
-    *
-    * @param astRoot
-    * @return
-    */
-  def nodesAndEdges(astRoot: nodes.AstNode): List[String] = {
-
-    def shouldBeDisplayed(v: nodes.AstNode): Boolean = !v.isInstanceOf[nodes.MethodParameterOut]
-
-    val vertices = astRoot.ast.where(shouldBeDisplayed).l
-    val edges = vertices.map(v => (v.id2, v.start.astChildren.where(shouldBeDisplayed).id.l))
-
-    val nodeStrings = vertices.map { node =>
-      s""""${node.id2}" [label = "${Shared.stringRepr(node)}" ]""".stripMargin
-    }
-
-    val edgeStrings = edges.flatMap {
-      case (id, childIds) =>
-        childIds.map(childId => s"""  "$id" -> "$childId"  """)
-    }
-
-    nodeStrings ++ edgeStrings
-  }
+  val syscallsCallees: Set[String] = MethodAnalyzer.callees(m, Utils.linuxSyscalls)
 
 }
-
 
 final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   val methodList: List[Method] = cpg.method.l
+
+  val methodSems: ListBuffer[MethodSem] = ListBuffer.empty
 
   def getCfg(method: Method): String = {
     Shared.dotGraph(method, MethodAnalyzer.expandedStoredNodes, DotCfgGenerator.cfgNodeShouldBeDisplayed)
@@ -105,7 +34,7 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
     Shared.graphEnd(sb)
   }
 
-  def dumpInfo(m: Method, index: Option[Integer]): Unit = {
+  def dumpInfo(m: Method, index: Option[Int]): Unit = {
 
     println(s"${optStr(index, "")} ${m.fullName}: isExernal:${m.isExternal}," +
       s" sig: ${m.signature}, " +

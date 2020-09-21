@@ -2,7 +2,6 @@ package sg.edu.ntu.smsem
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
-import io.shiftleft.semanticcpg.dotgenerator.{DotCfgGenerator, Shared}
 import io.shiftleft.semanticcpg.language._
 import sg.edu.ntu.ProjectMD
 
@@ -10,11 +9,11 @@ import scala.collection.mutable.ListBuffer
 
 class MethodSem(m: Method) {
 
-  val stdlibCallees: Set[String] = MethodAnalyzer.callees(m, Utils.stdlibCalls)
+  val stdlibCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.stdlibCalls)
 
-  val kernelUserCallees: Set[String] = MethodAnalyzer.callees(m, Utils.linuxKernlUserCalls)
+  val kernelUserCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.linuxKernlUserCalls)
 
-  val syscallsCallees: Set[String] = MethodAnalyzer.callees(m, Utils.linuxSyscalls)
+  val syscallsCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.linuxSyscalls)
 
 }
 
@@ -24,25 +23,19 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   val methodSems: ListBuffer[MethodSem] = ListBuffer.empty
 
-  def getCfg(method: Method): String = {
-    Shared.dotGraph(method, MethodAnalyzer.expandedStoredNodes, DotCfgGenerator.cfgNodeShouldBeDisplayed)
-  }
-
-  def getAst(method: Method): String = {
-    val sb = Shared.namedGraphBegin(method)
-    sb.append(MethodAnalyzer.nodesAndEdges(method).mkString("\n"))
-    Shared.graphEnd(sb)
+  def ccComplexity(m: Method): Int = {
+    val edges = MethodWrapper.getMethodCfgEdges(m)
+    val nodes = MethodWrapper.getMethodCfgNodes(m)
+    edges.length - nodes.length + 2
   }
 
   def dumpInfo(m: Method, index: Option[Int]): Unit = {
 
-    println(s"${optStr(index, "")} ${m.fullName}: isExernal:${m.isExternal}," +
-      s" sig: ${m.signature}, " +
-      s"pos: [(${optStr(m.lineNumber)},${optStr(m.columnNumber)}),(${optStr(m.lineNumberEnd)}, ${optStr(m.columnNumberEnd)})]")
-    //    val methodSteps = new Steps(m)
-    //    dumpToFile(getCfg(m), projectMD.toString, m.fullName, "cfg")
-    //    dumpToFile(getAst(m), projectMD.toString, m.fullName, "ast")
-    //    println(s"cfg:\n${getCfg(m)}\nast:\n${getAst(m)}")
+    //    m.start.ast.isIdentifier
+    //    m.start.call.code()
+    //    m.start.controlStructure
+    //    m.start.call.name("source").file
+    //    m.start.call.inAssignment
   }
 
   def dumpAll(): Unit = {

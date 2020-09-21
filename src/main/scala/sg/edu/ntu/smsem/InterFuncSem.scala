@@ -16,7 +16,7 @@ final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   def getConstFuncs: List[Method] = {
     cpg.method.internal.where { m =>
-      !m.signature.contains("const") && MethodAnalyzer.callOutsAreConst(m) && MethodAnalyzer.parameterOpsAreConst(m)
+      !m.signature.contains("const") && MethodWrapper.callOutsAreConst(m) && MethodWrapper.parameterOpsAreConst(m)
     }.toList()
   }
 
@@ -25,7 +25,7 @@ final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
     val methods = cpg.method.l
     println(methods.size)
     for (method <- methods) {
-      val dotStr = MethodAnalyzer.toDot(method.graph())
+      val dotStr = MethodWrapper.toDot(method.graph())
       println(dotStr)
     }
     val methodList = cpg.method.l

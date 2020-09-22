@@ -7,3 +7,4 @@ SMDB/
 !updateSymlinks.sh
 venv/
 .ccls-cache/
+*.o

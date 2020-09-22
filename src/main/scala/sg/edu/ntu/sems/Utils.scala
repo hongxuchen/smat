@@ -1,4 +1,4 @@
-package sg.edu.ntu.smsem
+package sg.edu.ntu.sems
 
 object Utils {
 

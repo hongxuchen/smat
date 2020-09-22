@@ -1,7 +1,7 @@
-package sg.edu.ntu.smsem
+package sg.edu.ntu.sems
 
 import io.shiftleft.codepropertygraph.generated.nodes
-import io.shiftleft.codepropertygraph.generated.nodes.{Call, Method}
+import io.shiftleft.codepropertygraph.generated.nodes.{Block, Call, ControlStructure, Method}
 import io.shiftleft.dataflowengineoss.language.toTrackingPoint
 import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
 import io.shiftleft.semanticcpg.language.{BaseNodeTypeDeco, NoResolve, toMethodMethods}
@@ -10,6 +10,7 @@ import overflowdb.Node
 import scala.jdk.CollectionConverters._
 
 object MethodWrapper {
+
 
   def callOutsAreConst(m: Method): Boolean = {
     m.start.callee(NoResolve).internal.l.forall(_.signature.contains("const"))
@@ -105,5 +106,13 @@ object MethodWrapper {
   def cfgStr(m: Method): String = m.start.dotCfg.l().head
 
   def astStr(m: Method): String = m.start.dotAst.l().head
+
+  def getControlStructs(m: Method): List[ControlStructure] = {
+    m.start.ast.isControlStructure.l
+  }
+
+  def getBlocks(m: Method): List[Block] = {
+    m.start.block.l
+  }
 
 }

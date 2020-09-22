@@ -1,4 +1,4 @@
-package sg.edu.ntu.smsem
+package sg.edu.ntu.sems
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
@@ -31,6 +31,8 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   def dumpInfo(m: Method, index: Option[Int]): Unit = {
 
+    m.start.call.parameter(NoResolve)
+
     //    m.start.ast.isIdentifier
     //    m.start.call.code()
     //    m.start.controlStructure
@@ -45,5 +47,7 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
     }
   }
 
-  override def collectFeatures(): Unit = ???
+  override def collectFeatures(): Unit = {
+
+  }
 }

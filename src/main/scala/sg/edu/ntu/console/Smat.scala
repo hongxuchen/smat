@@ -5,7 +5,7 @@ import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
 import sg.edu.ntu.serde.{CpgLoader, SmDBLoader, Utils}
-import sg.edu.ntu.smsem.SMItem
+import sg.edu.ntu.sems.SMItem
 
 import scala.util.control.NonFatal
 

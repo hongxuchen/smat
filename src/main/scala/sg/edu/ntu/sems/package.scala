@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 
 import org.slf4j.{Logger, LoggerFactory}
 
-package object smsem {
+package object sems {
 
   type FeatureTy = Integer
 

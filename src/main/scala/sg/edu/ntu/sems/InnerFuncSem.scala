@@ -19,6 +19,8 @@ class MethodSem(m: Method) {
 
 final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
+  val features:ListBuffer[FeatureTy] = ListBuffer.empty
+
   val methodList: List[Method] = cpg.method.l
 
   val methodSems: ListBuffer[MethodSem] = ListBuffer.empty

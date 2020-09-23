@@ -20,23 +20,39 @@ final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
     }.toList()
   }
 
+  def isSmallFunc(m: Method): Boolean = {
+    MethodWrapper.loc(m) match {
+      case Some(line) => line < Utils.LOC_THRESHOD
+      case _ => false
+    }
+  }
+
+  def isSelfRecursive(m: Method): Boolean = {
+    false
+  }
+
+  def isInternal(m: Method): Boolean = {
+    m.name.startsWith("_")
+  }
+
+  def isIgnoredMethod(m: Method): Boolean = {
+    !isSelfRecursive(m) && isInternal(m) || isSmallFunc(m)
+  }
+
+
   def getFuncs: List[Method] = {
     logger.info(s"==> analyzing ${projectMD}")
-    val methods = cpg.method.l
-    println(methods.size)
-    for (method <- methods) {
-      val dotStr = MethodWrapper.toDot(method.graph())
+    val definedMethods = cpg.method.internal.l
+
+    for (method <- definedMethods) {
+      val dotStr = MethodWrapper.astStr(method)
       println(dotStr)
-    }
-    val methodList = cpg.method.l
-    for (method <- methodList) {
-      println(s"${method}\t")
     }
     val callList = cpg.call.l()
     for (call <- callList) {
       println(s"${call.name}")
     }
-    methodList
+    ???
   }
 
   override def dumpAll(): Unit = {

@@ -4,16 +4,17 @@ import io.shiftleft.codepropertygraph.generated.nodes
 import io.shiftleft.codepropertygraph.generated.nodes.{Block, Call, ControlStructure, Method}
 import io.shiftleft.dataflowengineoss.language.toTrackingPoint
 import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
-import io.shiftleft.semanticcpg.language.{BaseNodeTypeDeco, NoResolve, toMethodMethods}
+import io.shiftleft.semanticcpg.language._
 import overflowdb.Node
 
 import scala.jdk.CollectionConverters._
 
 object MethodWrapper {
 
+  implicit val curResolve: ICallResolver = NoResolve
 
   def callOutsAreConst(m: Method): Boolean = {
-    m.start.callee(NoResolve).internal.l.forall(_.signature.contains("const"))
+    m.start.callee.internal.l.forall(_.signature.contains("const"))
   }
 
   def parameterOpsAreConst(m: Method): Boolean = {
@@ -96,11 +97,11 @@ object MethodWrapper {
   def inSameSrcFile(m1: Method, m2: Method): Boolean = m1.filename == m2.filename
 
   def specialCallees(method: Method, funcs: Set[String]): Set[String] = {
-    method.start.callee(NoResolve).name.where(n => funcs.contains(n)).toSet
+    method.start.callee.name.where(n => funcs.contains(n)).toSet
   }
 
   def getImmediateCallees(m: Method, filter: Method => Boolean): List[Method] = {
-    m.start.callee(NoResolve).internal.where(m => filter(m)).l()
+    m.start.callee.internal.where(m => filter(m)).l()
   }
 
   def cfgStr(m: Method): String = m.start.dotCfg.l().head
@@ -109,6 +110,20 @@ object MethodWrapper {
 
   def getControlStructs(m: Method): List[ControlStructure] = {
     m.start.ast.isControlStructure.l
+  }
+
+  def getBranchStructs(m: Method): List[ControlStructure] = {
+    m.start.ast.isControlStructure.parserTypeName("(If|Else).*").l
+  }
+
+  def getLoopStructs(m: Method): List[ControlStructure] = {
+    m.start.ast.isControlStructure.parserTypeName("(For|Do|While).*").l
+  }
+
+  def numberOfDeepLoops(m: Method, depth: Int = 3): Integer = {
+    m.start.where { mm =>
+      mm.depth(ast => ast.isControlStructure) >= depth
+    }.l.length
   }
 
   def getBlocks(m: Method): List[Block] = {

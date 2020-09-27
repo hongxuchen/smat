@@ -4,7 +4,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.serde.{CpgLoader, SmDBLoader, Utils}
+import sg.edu.ntu.serde.{CpgLoader, SmDBSerde, Utils}
 import sg.edu.ntu.sems.SMItem
 
 import scala.util.control.NonFatal
@@ -85,7 +85,7 @@ object Smat {
     if (smdbPath.exists) {
       if (!config.forceUpdateSM) {
         logger.info(s"${smdbFileName} exists, do nothing")
-        val smItem = SmDBLoader.loadFromSMDB(smdbFileName)
+        val smItem = SmDBSerde.load(smdbFileName)
         return smItem
       } else {
         logger.info(s"${smdbFileName} force updating smdb")

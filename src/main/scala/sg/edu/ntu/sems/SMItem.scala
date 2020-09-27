@@ -5,7 +5,8 @@ import sg.edu.ntu.ProjectMD
 
 import scala.collection.mutable.ListBuffer
 
-class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) {
+@SerialVersionUID(100L)
+case class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) extends Serializable {
 
   def appendSem(sem: SMSem): Unit = {
     logger.info(s"adding ${sem.getClass} to ${projectMD}")
@@ -17,6 +18,9 @@ class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) {
       sem.dumpAll()
     }
   }
+
+
+
 
 }
 

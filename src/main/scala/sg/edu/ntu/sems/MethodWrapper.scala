@@ -126,6 +126,33 @@ object MethodWrapper {
     }.l.length
   }
 
+  def isSmall(m: Method): Boolean = {
+    MethodWrapper.loc(m) match {
+      case Some(line) => line < Utils.LOC_THRESHOD
+      case _ => false
+    }
+  }
+
+  def isSelfRecursive(m: Method): Boolean = {
+    val calledMethodOpt = m.start.call(m.name).callee.l.headOption
+    calledMethodOpt match {
+      case Some(calledMethod) => calledMethod == m
+      case _ => false
+    }
+  }
+
+  def isInline(m: Method): Boolean = {
+    m.signature.contains("inline")
+  }
+
+  def isInternal(m: Method): Boolean = {
+    m.name.startsWith("_")
+  }
+
+  def isIgnoredMethod(m: Method): Boolean = {
+    !isSelfRecursive(m) && isInline(m) && isInternal(m) || isSmall(m)
+  }
+
   def getBlocks(m: Method): List[Block] = {
     m.start.block.l
   }

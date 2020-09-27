@@ -1,11 +1,10 @@
 package sg.edu.ntu.sems
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import io.shiftleft.semanticcpg.testfixtures.CodeToCpgSuite
 
-class SpecialCalleesSpec extends AnyFlatSpec with Matchers {
+class SpecialCalleesSpec extends CodeToCpgSuite {
 
-  val code =
+  override val code: String =
     """#include<string.h>
       |#include<stdlib.h>
       |#include<stdio.h>
@@ -24,7 +23,7 @@ class SpecialCalleesSpec extends AnyFlatSpec with Matchers {
       |}""".stripMargin
 
 
-  "Special callees" should "be handled correctly" in {
+  "Special callees should be handled correctly" in {
 
 
   }

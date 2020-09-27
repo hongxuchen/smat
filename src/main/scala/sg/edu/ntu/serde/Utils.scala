@@ -5,7 +5,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import org.slf4j.{Logger, LoggerFactory}
 import sg.edu.ntu.{ProjectMD, RawSuffix}
 
-package object Utils {
+object Utils {
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 

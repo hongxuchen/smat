@@ -2,9 +2,12 @@ package sg.edu.ntu.matching
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
 
 class ScoringSpec extends AnyFlatSpec with Matchers {
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   def ~=(x: Double, y: Double, precision: Double = 0.001): Boolean = (x - y).abs < precision
 
@@ -22,9 +25,9 @@ class ScoringSpec extends AnyFlatSpec with Matchers {
 
   "The Hello object" should "say hello" in {
     val weights = Scoring.inverseWeightGen(LEN)
-    println(s"weights: ${weights}")
+    logger.debug(s"weights: ${weights}")
     val thresholds = Scoring.thresholdGen(LEN)
-    println(s"thresholds: ${thresholds}")
+    logger.debug(s"thresholds: ${thresholds}")
   }
 
   "weighted scoring" should "weight" in {

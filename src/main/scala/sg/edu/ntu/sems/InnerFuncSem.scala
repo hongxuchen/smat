@@ -1,35 +1,15 @@
 package sg.edu.ntu.sems
 
-import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
 import io.shiftleft.semanticcpg.language._
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.matching.ScoreTy
 
 import scala.collection.mutable.ListBuffer
 
-class MethodSem(m: Method) {
+final case class InnerFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) extends SMSem {
 
-  val stdlibCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.stdlibCalls)
-
-  val kernelUserCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.linuxKernlUserCalls)
-
-  val syscallsCallees: Set[String] = MethodWrapper.specialCallees(m, Utils.linuxSyscalls)
-
-}
-
-final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
-
-  val features:ListBuffer[FeatureTy] = ListBuffer.empty
-
-  val methodList: List[Method] = cpg.method.l
-
-  val methodSems: ListBuffer[MethodSem] = ListBuffer.empty
-
-  def ccComplexity(m: Method): Int = {
-    val edges = MethodWrapper.getMethodCfgEdges(m)
-    val nodes = MethodWrapper.getMethodCfgNodes(m)
-    edges.length - nodes.length + 2
-  }
+  val featureList: ListBuffer[Array[MetricsTy]] = ListBuffer.empty
 
   def dumpInfo(m: Method, index: Option[Int]): Unit = {
 
@@ -44,12 +24,27 @@ final case class InnerFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
   def dumpAll(): Unit = {
     println(s"=== inner info for ${projectMD} ===")
-    for ((m, i) <- methodList.zipWithIndex) {
-      dumpInfo(m, Some(i))
+    for ((m, i) <- smms.zipWithIndex) {
+      dumpInfo(m.m, Some(i))
     }
   }
 
-  override def collectFeatures(): Unit = {
+  def collectFeatures(): Unit = {
 
+    for (m <- smms) {
+      val features: Array[MetricsTy] = Array.empty
+      features(0) = m.calleesSM.kernelUserCallees.size
+      features(1) = m.calleesSM.stdlibCallees.size
+      features(2) = m.calleesSM.syscallsCallees.size
+      featureList.addOne(features)
+    }
   }
+
+  override def calculateSim(other: InnerFuncSem.this.type): ScoreTy = {
+    ???
+  }
+}
+
+object InnerFuncSem {
+
 }

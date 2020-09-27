@@ -23,22 +23,57 @@ object Scoring {
     (len to 1 by -1).map(i => i * diff + base).toList
   }
 
+  def getLen(sps: List[ScoredProj]): Int = {
+    require(sps.nonEmpty)
+    val _len = sps.head.scores.length
+    sps.foreach { sp =>
+      require(sp.scores.length == _len)
+    }
+    _len
+  }
+
 }
 
 
 sealed trait Scoring {
 
-  def sortedProjs: List[MatchedTy]
+  def sps: List[ScoredProj]
+
+  protected def sortedProjs: List[MatchedTy]
 
   def getTops(n: Int = 10): List[MatchedTy] = sortedProjs.take(n)
 
 }
 
-final case class NDimScoring(len: Int, sps: List[ScoredProj]) extends Scoring {
-  override def sortedProjs: List[MatchedTy] = ???
+final case class NDimScoring(sps: List[ScoredProj]) extends Scoring {
+
+  @tailrec
+  def greaterOrEq(sl1: List[ScoreTy], sl2: List[ScoreTy]): Boolean = {
+    (sl1, sl2) match {
+      case (sl1l :: Nil, sl2l :: Nil) => {
+        sl1l >= sl2l
+      }
+      case (sl1h :: sl1t, sl2h :: sl2t) => {
+        if (sl1h > sl2h) true else greaterOrEq(sl1t, sl2t)
+      }
+      case (_, _) => {
+        throw new RuntimeException("shouldn't happen")
+      }
+    }
+  }
+
+  override def sortedProjs: List[MatchedTy] = {
+    sps.sortWith { case (sp1: ScoredProj, sp2: ScoredProj) => {
+      greaterOrEq(sp1.scores, sp2.scores)
+    }
+    }.map(_.projectMD)
+  }
 }
 
-final case class ThresholdScoring(len: Int, sps: List[ScoredProj]) extends Scoring {
+final case class ThresholdScoring(sps: List[ScoredProj]) extends Scoring {
+
+  val len: Int = Scoring.getLen(sps)
+
   /**
     * tail recursive sorting according to threshold in each dimention, note that as long as threthold matches we ignore remaining dimention values
     *
@@ -75,7 +110,9 @@ final case class ThresholdScoring(len: Int, sps: List[ScoredProj]) extends Scori
   }
 }
 
-final case class WeightedScoring(len: Int, sps: List[ScoredProj]) extends Scoring {
+final case class WeightedScoring(sps: List[ScoredProj]) extends Scoring {
+
+  val len: Int = Scoring.getLen(sps)
 
   def overallScore(sl: List[ScoreTy], wl: List[ScoreTy]): ScoreTy = {
     sl.zip(wl).map { case (s, w) => s * w }.sum

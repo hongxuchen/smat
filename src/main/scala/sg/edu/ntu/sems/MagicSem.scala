@@ -4,24 +4,25 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{Call, Literal, _}
 import io.shiftleft.semanticcpg.language.BaseNodeTypeDeco
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.matching.ScoreTy
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-final case class CVarSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
+final case class MagicSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
-  val features: ListBuffer[FeatureTy] = ListBuffer.empty
+  val features: ListBuffer[MetricsTy] = ListBuffer.empty
 
   override def dumpAll(): Unit = {
     println(s"=== const info for ${projectMD} ===")
   }
 
-  override def collectFeatures(): Unit = {
-
+  override def calculateSim(other: MagicSem.this.type): ScoreTy = {
+    ???
   }
 }
 
-object CVarSem {
+object MagicSem {
 
   def getSpecialArgs(call: Call, filter: Literal => Boolean = _ => true): (mutable.Set[Literal], mutable.Set[Identifier]) = {
 
@@ -58,5 +59,6 @@ object CVarSem {
 
     identifiers.map(id => (identifierKey(id), id)).toMap.values.toSet
   }
+
 
 }

@@ -1,33 +1,39 @@
 package sg.edu.ntu.sems
 
-import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.nodes.Method
-import io.shiftleft.semanticcpg.language._
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.matching.{ScoreTy, Similarity}
+
+import scala.collection.mutable
 
 /**
   * this class stores the coarse grained features across functions
   * finally the semantic is a 1-dimention vector
   *
   * @param projectMD
-  * @param cpg
+  * @param smms
   */
-final case class InterFuncSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
+final case class InterFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) extends SMSem {
 
-  def getConstFuncs: List[Method] = {
-    cpg.method.internal.where { m =>
-      !m.signature.contains("const") && MethodWrapper.callOutsAreConst(m) && MethodWrapper.parameterOpsAreConst(m)
-    }.toList()
-  }
+  val stdlib: Set[String] = _getCallees(_.stdlibCallees)
+  val sys: Set[String] = _getCallees(_.syscallsCallees)
+  val kernel: Set[String] = _getCallees(_.kernelUserCallees)
 
-  def getInterestingFuncs: List[Method] = {
-    logger.info(s"==> analyzing ${projectMD}")
-    cpg.method.internal.where(m => !MethodWrapper.isIgnoredMethod(m)).l
+  def _getCallees(f: CalleesSM => Set[String]): Set[String] = {
+    val s: mutable.Set[String] = mutable.Set.empty
+    smms.foldLeft(s)((acc, cur) => acc ++= f(cur.calleesSM))
+    s.toSet
   }
 
   override def dumpAll(): Unit = {
     println(s"=== inter info for ${projectMD} ===")
   }
 
-  override def collectFeatures(): Unit = ???
+  override def calculateSim(other: InterFuncSem.this.type): ScoreTy = {
+    val s = List(
+      Similarity.getJaccardSim(this.stdlib, other.stdlib),
+      Similarity.getJaccardSim(this.kernel, other.kernel),
+      Similarity.getJaccardSim(this.sys, other.sys)
+    )
+    s.sum / s.size.toDouble
+  }
 }

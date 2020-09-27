@@ -153,6 +153,12 @@ object MethodWrapper {
     !isSelfRecursive(m) && isInline(m) && isInternal(m) || isSmall(m)
   }
 
+  def ccComplexity(m: Method): Int = {
+    val edges = MethodWrapper.getMethodCfgEdges(m)
+    val nodes = MethodWrapper.getMethodCfgNodes(m)
+    edges.length - nodes.length + 2
+  }
+
   def getBlocks(m: Method): List[Block] = {
     m.start.block.l
   }

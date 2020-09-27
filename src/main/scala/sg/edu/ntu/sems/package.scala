@@ -4,10 +4,11 @@ import java.io.{File, IOException}
 import java.nio.file.{Files, Paths}
 
 import org.slf4j.{Logger, LoggerFactory}
+import sg.edu.ntu.matching.ScoreTy
 
 package object sems {
 
-  type FeatureTy = Integer
+  type MetricsTy = Integer
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -43,9 +44,10 @@ package object sems {
     */
   abstract class SMSem() {
 
-    def collectFeatures(): Unit
-
     def dumpAll(): Unit
+
+    def calculateSim(other: this.type): ScoreTy
+
   }
 
 }

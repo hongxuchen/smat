@@ -32,6 +32,10 @@ object Utils {
     getDBDir / projectMD.asSmFileName
   }
 
+  def getSMDBFpaths: List[String] = {
+    getDBDir.list(_.`extension`.contains(".sm")).map(_.toString).toList.sorted
+  }
+
   def getCpgFromProjID(projectMD: ProjectMD): Option[Cpg] = {
     val rawDB = getCpgDBPath(projectMD)
     if (rawDB.isRegularFile) {

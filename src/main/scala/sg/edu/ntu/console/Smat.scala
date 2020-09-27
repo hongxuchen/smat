@@ -4,13 +4,28 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.matching.{NDimScoring, ScoredProj, Scoring, ThresholdScoring, WeightedScoring}
 import sg.edu.ntu.serde.{CpgLoader, SmDBSerde, Utils}
 import sg.edu.ntu.sems.SMItem
 
 import scala.util.control.NonFatal
 
+object ScoreEnum extends Enumeration {
+  type ScoreEnum = Value
+  val NDim, Threshold, Weighted = Value
+
+  def getScoring(v: ScoreEnum, sps: List[ScoredProj]): Scoring = {
+    v match {
+      case NDim => NDimScoring(sps)
+      case Threshold => ThresholdScoring(sps)
+      case Weighted => WeightedScoring(sps)
+    }
+  }
+}
 
 object Smat {
+
+  implicit val scoreRead: scopt.Read[ScoreEnum.ScoreEnum] = scopt.Read.reads(ScoreEnum withName _)
 
   val defaultExts = Set(".c", ".cc", ".cpp", ".h", ".hpp")
 
@@ -18,6 +33,7 @@ object Smat {
 
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
                           semMatch: Boolean = false,
+                          smScoring: ScoreEnum.ScoreEnum = ScoreEnum.NDim,
                           projectMD: ProjectMD = ProjectMD.DUMMY_PROJ,
                           srcExts: Set[String] = defaultExts,
                           forceUpdateCPG: Boolean = false,
@@ -91,8 +107,17 @@ object Smat {
         logger.info(s"${smdbFileName} force updating smdb")
       }
     }
+    logger.info("generating smdb...")
     val smItem = SMItem(config.projectMD, cpg)
+    SmDBSerde.write(smItem)
     smItem
+  }
+
+  def dumpMatched(targetSmItem: SMItem): Unit = {
+    val scoredProjs: List[ScoredProj] = Utils.getSMDBFpaths.map { fpath =>
+      val otherSmItem = SmDBSerde.load(fpath)
+      targetSmItem.calculateSim(otherSmItem)
+    }
   }
 
   def parseConfig(args: Array[String]): Option[ParserConfig] =
@@ -144,6 +169,9 @@ object Smat {
       opt[Unit]('M', "match")
         .text("flag to indicate a semantic match procedure")
         .action((_, c) => c.copy(semMatch = true))
+      opt[ScoreEnum.ScoreEnum]("score")
+        .text("matching scoring strategy")
+        .action((s, c) => c.copy(smScoring = s))
       help("help").text("display this help message")
     }.parse(args, ParserConfig())
 
@@ -153,11 +181,12 @@ object Smat {
       try {
         val cpg = generateCpg(config)
         logger.info(s"create SMDB for ${config.projectMD}")
-        val smItem = generateSMDB(config, cpg)
-        smItem.analyze()
+        val smItem: SMItem = generateSMDB(config, cpg)
+        smItem.dump()
         try {
           if (config.semMatch) {
             logger.info(s"proceed with semantic matching against ${config.projectMD}")
+            dumpMatched(smItem)
           }
         } finally {
           cpg.close()

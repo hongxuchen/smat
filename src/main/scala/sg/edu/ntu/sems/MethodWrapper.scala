@@ -6,6 +6,7 @@ import io.shiftleft.dataflowengineoss.language.toTrackingPoint
 import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
 import io.shiftleft.semanticcpg.language._
 import overflowdb.Node
+import sg.edu.ntu.Config
 
 import scala.jdk.CollectionConverters._
 
@@ -24,7 +25,7 @@ object MethodWrapper {
     } && m.start.assignments.target.reachableBy(m.start.parameter).isEmpty
   }
 
-  def loc(m: Method): Option[Int] = {
+  def sloc(m: Method): Option[Int] = {
     (m.lineNumber, m.lineNumberEnd) match {
       case (Some(start), Some(end)) => {
         Some(end - start)
@@ -100,8 +101,17 @@ object MethodWrapper {
     method.start.callee.name.where(n => funcs.contains(n)).toSet
   }
 
-  def getImmediateCallees(m: Method, filter: Method => Boolean): List[Method] = {
+  /**
+    * @param m
+    * @param filter
+    * @return immediate calless defined in this component
+    */
+  def getICallees(m: Method, filter: Method => Boolean): List[Method] = {
     m.start.callee.internal.where(m => filter(m)).l()
+  }
+
+  def getICallers(m: Method, filter: Method => Boolean): List[Method] = {
+    m.start.caller.where(filter).l
   }
 
   def cfgStr(m: Method): String = m.start.dotCfg.l().head
@@ -120,15 +130,15 @@ object MethodWrapper {
     m.start.ast.isControlStructure.parserTypeName("(For|Do|While).*").l
   }
 
-  def numberOfDeepLoops(m: Method, depth: Int = 3): Integer = {
-    m.start.where { mm =>
-      mm.depth(ast => ast.isControlStructure) >= depth
-    }.l.length
+  def getLoopDepths(m: Method): Int = {
+    m.start.map { mm =>
+      mm.depth(ast => ast.isControlStructure)
+    }.l.head
   }
 
   def isSmall(m: Method): Boolean = {
-    MethodWrapper.loc(m) match {
-      case Some(line) => line < Utils.LOC_THRESHOD
+    MethodWrapper.sloc(m) match {
+      case Some(line) => line < Config.SLocSmallMax
       case _ => false
     }
   }
@@ -151,12 +161,6 @@ object MethodWrapper {
 
   def isIgnoredMethod(m: Method): Boolean = {
     !isSelfRecursive(m) && isInline(m) && isInternal(m) || isSmall(m)
-  }
-
-  def ccComplexity(m: Method): Int = {
-    val edges = MethodWrapper.getMethodCfgEdges(m)
-    val nodes = MethodWrapper.getMethodCfgNodes(m)
-    edges.length - nodes.length + 2
   }
 
   def getBlocks(m: Method): List[Block] = {

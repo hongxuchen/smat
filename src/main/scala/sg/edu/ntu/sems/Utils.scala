@@ -2,8 +2,6 @@ package sg.edu.ntu.sems
 
 object Utils {
 
-  val LOC_THRESHOD: Int = 8
-
   // Find more information at http://www.makelinux.net/ldd3/ (Chapter 3)
   // and https://www.kernel.org/doc/html/latest/core-api/mm-api.html
   val linuxKernlUserCalls: Set[String] = Set(
@@ -707,6 +705,8 @@ object Utils {
     "y1",
     "yn"
   )
+
+  val SpecialCallsNum = linuxKernlUserCalls.size + linuxSyscalls.size + stdlibCalls.size
 
 
 }

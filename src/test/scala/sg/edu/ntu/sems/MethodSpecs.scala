@@ -28,6 +28,4 @@ class MethodSpecs extends CodeToCpgSuite {
     MethodWrapper.isSmall(dumpMethod) shouldBe true
   }
 
-  ""
-
 }

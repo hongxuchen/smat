@@ -4,21 +4,22 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{Call, Literal, _}
 import io.shiftleft.semanticcpg.language.BaseNodeTypeDeco
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.matching.ScoreTy
+import sg.edu.ntu.matching.{ScoreTy, Similarity}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 final case class MagicSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
 
-  val features: ListBuffer[MetricsTy] = ListBuffer.empty
+  val features: Array[MetricsTy] = {
+    ???
+  }
 
   override def dumpAll(): Unit = {
     println(s"=== const info for ${projectMD} ===")
   }
 
   override def calculateSim(other: MagicSem.this.type): ScoreTy = {
-    ???
+    Similarity.getCosineSim(features, other.features)
   }
 }
 

@@ -2,12 +2,12 @@ package sg.edu.ntu.matching
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import sg.edu.ntu.ProjectMD
 
 class ScoringSpec extends AnyFlatSpec with Matchers {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def ~=(x: Double, y: Double, precision: Double = 0.001): Boolean = (x - y).abs < precision
 
@@ -31,7 +31,7 @@ class ScoringSpec extends AnyFlatSpec with Matchers {
   }
 
   "weighted scoring" should "weight" in {
-    WeightedScoring(LEN, sps).sortedProjs shouldBe m2
+    WeightedScoring(sps).sortedProjs shouldBe m2
   }
 
   "threshold scoring" should "threshold" in {
@@ -40,7 +40,7 @@ class ScoringSpec extends AnyFlatSpec with Matchers {
     for ((g, e) <- gridGen.zip(expected)) {
       ~=(g, e) shouldBe true
     }
-    ThresholdScoring(LEN, sps).getTops(5) shouldBe m1
+    ThresholdScoring(sps).getTops(5) shouldBe m1
   }
 
 }

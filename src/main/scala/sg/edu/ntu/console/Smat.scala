@@ -4,28 +4,21 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.matching.{NDimScoring, ScoredProj, Scoring, ThresholdScoring, WeightedScoring}
-import sg.edu.ntu.serde.{CpgLoader, SmDBSerde, Utils}
+import sg.edu.ntu.console.ScoreEnum.{NDim, Threshold, Weighted}
+import sg.edu.ntu.matching.{NDimScoring, ScoredProj, ThresholdScoring, WeightedScoring}
 import sg.edu.ntu.sems.SMItem
+import sg.edu.ntu.serde.{CpgLoader, SmDBSerde, Utils}
 
 import scala.util.control.NonFatal
 
 object ScoreEnum extends Enumeration {
   type ScoreEnum = Value
   val NDim, Threshold, Weighted = Value
-
-  def getScoring(v: ScoreEnum, sps: List[ScoredProj]): Scoring = {
-    v match {
-      case NDim => NDimScoring(sps)
-      case Threshold => ThresholdScoring(sps)
-      case Weighted => WeightedScoring(sps)
-    }
-  }
 }
 
 object Smat {
 
-  implicit val scoreRead: scopt.Read[ScoreEnum.ScoreEnum] = scopt.Read.reads(ScoreEnum withName _)
+  implicit val scoreRead: scopt.Read[ScoreEnum.ScoreEnum] = scopt.Read.reads(ScoreEnum.withName)
 
   val defaultExts = Set(".c", ".cc", ".cpp", ".h", ".hpp")
 
@@ -113,10 +106,20 @@ object Smat {
     smItem
   }
 
-  def dumpMatched(targetSmItem: SMItem): Unit = {
-    val scoredProjs: List[ScoredProj] = Utils.getSMDBFpaths.map { fpath =>
+  def dumpMatched(targetSmItem: SMItem, scoreEnum: ScoreEnum.Value): Unit = {
+    val sps: List[ScoredProj] = Utils.getSMDBFpaths.map { fpath =>
       val otherSmItem = SmDBSerde.load(fpath)
       targetSmItem.calculateSim(otherSmItem)
+    }
+    val scoring = scoreEnum match {
+      case NDim => NDimScoring(sps)
+      case Threshold => ThresholdScoring(sps)
+      case Weighted => WeightedScoring(sps)
+    }
+    val tops = scoring.getTops()
+    tops.zipWithIndex.foreach { case (sp, index) => {
+      println(s"${index} ${sp}")
+    }
     }
   }
 
@@ -186,7 +189,7 @@ object Smat {
         try {
           if (config.semMatch) {
             logger.info(s"proceed with semantic matching against ${config.projectMD}")
-            dumpMatched(smItem)
+            dumpMatched(smItem, config.smScoring)
           }
         } finally {
           cpg.close()

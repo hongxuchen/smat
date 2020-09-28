@@ -18,9 +18,13 @@ final case class InterFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) exten
   val sys: Set[String] = _getCallees(_.syscallsCallees)
   val kernel: Set[String] = _getCallees(_.kernelUserCallees)
 
-  def _getCallees(f: CalleesSM => Set[String]): Set[String] = {
+  val features:Array[MetricsTy] = {
+
+  }
+
+  def _getCallees(f: SpecialCall => Set[String]): Set[String] = {
     val s: mutable.Set[String] = mutable.Set.empty
-    smms.foldLeft(s)((acc, cur) => acc ++= f(cur.calleesSM))
+    smms.foldLeft(s)((acc, cur) => acc ++= f(cur.sCall))
     s.toSet
   }
 

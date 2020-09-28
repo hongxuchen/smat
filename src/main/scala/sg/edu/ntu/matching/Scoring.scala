@@ -1,6 +1,6 @@
 package sg.edu.ntu.matching
 
-import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.{Config, ProjectMD}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -8,6 +8,7 @@ import scala.collection.mutable.ListBuffer
 case class ScoredProj(projectMD: ProjectMD, scores: List[ScoreTy])
 
 object Scoring {
+
   def thresholdGen(len: Int): List[ScoreTy] = {
     val d = Range(1, len + 1).foldLeft(0.0d)((acc, cur) => acc + 1.0 / cur.toDouble)
     Range(1, len + 1).map { cur => 1.0 / cur / d }.toList
@@ -41,7 +42,7 @@ sealed trait Scoring {
 
   protected def sortedProjs: List[MatchedTy]
 
-  def getTops(n: Int = 10): List[MatchedTy] = sortedProjs.take(n)
+  def getTops(n: Int = Config.ScoreTops): List[MatchedTy] = sortedProjs.take(n)
 
 }
 

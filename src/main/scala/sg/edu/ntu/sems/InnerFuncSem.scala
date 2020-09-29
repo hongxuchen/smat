@@ -1,7 +1,8 @@
 package sg.edu.ntu.sems
 
 import org.slf4j.{Logger, LoggerFactory}
-import sg.edu.ntu.matching.{ScoreTy, Similarity}
+import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
+import sg.edu.ntu.matching.Similarity
 import sg.edu.ntu.{Config, ProjectMD}
 
 final case class InnerFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) extends SMSem {

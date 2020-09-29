@@ -1,7 +1,9 @@
 package sg.edu.ntu.sems
 
-import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.matching.{ScoreTy, Similarity}
+import io.shiftleft.codepropertygraph.generated.nodes.Method
+import sg.edu.ntu.TypeDefs.ScoreTy
+import sg.edu.ntu.matching.Similarity
+import sg.edu.ntu.{Config, ProjectMD}
 
 import scala.collection.mutable
 
@@ -12,15 +14,20 @@ import scala.collection.mutable
   * @param projectMD
   * @param smms
   */
-final case class InterFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) extends SMSem {
+final case class InterFuncSem(projectMD: ProjectMD, methods: List[Method],
+                              smms: List[SemMethod]) extends SMSem {
 
   val stdlib: Set[String] = _getCallees(_.stdlibCallees)
   val sys: Set[String] = _getCallees(_.syscallsCallees)
   val kernel: Set[String] = _getCallees(_.kernelUserCallees)
 
-  val features:Array[MetricsTy] = {
-
-  }
+  private val allMethodNum: Int = methods.length
+  private val semMethodNum: Int = smms.length
+  private val recursiveMethodNum: Int = smms.count(_.isRecursive)
+  private val icallees: Int = smms.map(_.icallees.length).sum
+  private val icallers: Int = smms.map(_.icallers.length).sum
+  private val deepLoopMethodNum: Int = smms.count(_.loopDepth > Config.LoopSmallMax)
+  private val methodFileNum: Int = smms.map(_.m.filename).toSet.size
 
   def _getCallees(f: SpecialCall => Set[String]): Set[String] = {
     val s: mutable.Set[String] = mutable.Set.empty
@@ -28,16 +35,31 @@ final case class InterFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) exten
     s.toSet
   }
 
+  val miscFeatures: Array[Double] = {
+    Array(
+      // TODO unit test for them
+      icallees.toDouble / (icallees + icallers).toDouble,
+      icallers.toDouble / (icallees + icallers).toDouble,
+      semMethodNum.toDouble / allMethodNum.toDouble,
+      deepLoopMethodNum.toDouble / semMethodNum.toDouble,
+      recursiveMethodNum.compare(0)
+    )
+  }
+
   override def dumpAll(): Unit = {
     println(s"=== inter info for ${projectMD} ===")
   }
 
   override def calculateSim(other: InterFuncSem.this.type): ScoreTy = {
-    val s = List(
-      Similarity.getJaccardSim(this.stdlib, other.stdlib),
-      Similarity.getJaccardSim(this.kernel, other.kernel),
-      Similarity.getJaccardSim(this.sys, other.sys)
-    )
-    s.sum / s.size.toDouble
+    val s1 = {
+      val sl = Array(
+        Similarity.getJaccardSim(this.stdlib, other.stdlib),
+        Similarity.getJaccardSim(this.kernel, other.kernel),
+        Similarity.getJaccardSim(this.sys, other.sys),
+      )
+      sl.sum / sl.length
+    }
+    val s2 = Similarity.getCosineSim(miscFeatures, other.miscFeatures)
+    (s1 + s2) / 2.0
   }
 }

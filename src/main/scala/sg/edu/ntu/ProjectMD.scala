@@ -11,7 +11,7 @@ case class ProjectMD(proj: String, version: String) {
 
 object ProjectMD {
 
-  val DUMMY_PROJ = ProjectMD("__DUMMY__", "__DUMMY__")
+  val DUMMY_PROJ: ProjectMD = ProjectMD("__DUMMY__", "__DUMMY__")
 
   def apply(s: String): ProjectMD = {
     val ss = s.split('-')

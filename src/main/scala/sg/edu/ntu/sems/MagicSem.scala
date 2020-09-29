@@ -4,7 +4,8 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{Call, Literal, _}
 import io.shiftleft.semanticcpg.language.BaseNodeTypeDeco
 import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.matching.{ScoreTy, Similarity}
+import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
+import sg.edu.ntu.matching.Similarity
 
 import scala.collection.mutable
 

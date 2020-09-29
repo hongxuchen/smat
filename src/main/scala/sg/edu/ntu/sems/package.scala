@@ -4,11 +4,9 @@ import java.io.{File, IOException}
 import java.nio.file.{Files, Paths}
 
 import org.slf4j.{Logger, LoggerFactory}
-import sg.edu.ntu.matching.ScoreTy
+import sg.edu.ntu.TypeDefs.ScoreTy
 
 package object sems {
-
-  type MetricsTy = Integer
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -26,7 +24,7 @@ package object sems {
       Files.createDirectory(tmpDir)
     }
     val fileName = label + '.' + fileType
-    val filePath = Paths.get(tmpDir + File.separator + fileName)
+    val filePath = Paths.get(tmpDir.toString, fileName)
     try {
       Files.write(filePath, s.getBytes())
     } catch {

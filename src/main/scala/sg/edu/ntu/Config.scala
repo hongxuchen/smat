@@ -25,6 +25,14 @@ object Config {
   val SpecialCallMax: Int = 20
   val SpecialCallF: Int = 2
 
+  val LiteralLen: Int = 20
+  val ConstMax: Int = 20
+  val ConstF: Int = 2
+  val SemConstMax: Int = 10
+  val SemConstF: Int = 1
+  val FileMax: Int = 50
+  val FileF: Int = 5
+
   val InnerFeatures: Int = 10
   val ScoreTops: Int = 10
 }

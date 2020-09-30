@@ -1,14 +1,66 @@
 package sg.edu.ntu.sems
 
+import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes
-import io.shiftleft.codepropertygraph.generated.nodes.{Block, Call, ControlStructure, Method}
+import io.shiftleft.codepropertygraph.generated.nodes._
 import io.shiftleft.dataflowengineoss.language.toTrackingPoint
 import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
 import io.shiftleft.semanticcpg.language._
 import overflowdb.Node
 import sg.edu.ntu.Config
 
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
+
+object CpgWrapper {
+
+  def getInterestingFuncs(cpg: Cpg): List[Method] = {
+    cpg.method.internal.where(m => !MethodWrapper.isIgnoredMethod(m)).l
+  }
+
+  def getAllFuncs(cpg: Cpg): List[Method] = {
+    cpg.method.internal.l
+  }
+
+  def getConstFuncs(cpg: Cpg): List[Method] = {
+    cpg.method.internal.where { m =>
+      !m.signature.contains("const") && MethodWrapper.callOutsAreConst(m) && MethodWrapper.parameterOpsAreConst(m)
+    }.toList()
+
+  }
+
+  def getSpecialArgs(call: Call, filter: Literal => Boolean = _ => true): (mutable.Set[Literal], mutable.Set[Identifier]) = {
+
+    val literals: mutable.Set[Literal] = mutable.Set.empty
+    val identifiers: mutable.Set[Identifier] = mutable.Set.empty
+
+    call.start.argument.map {
+      case id: Identifier => {
+        if (id.name.toUpperCase == id.name) {
+          identifiers.add(id)
+        }
+      }
+      case literal: Literal => {
+        if (filter(literal)) {
+          literals.add(literal)
+        }
+      }
+      case exp => {
+        logger.warn(s"unhandled: ${exp}:${exp.getClass}")
+      }
+    }
+    (literals, identifiers)
+  }
+
+  def getSemLiterals(literals: mutable.Set[Literal]): Set[SemLiteral] = {
+    literals.map(l => SemLiteral(l.code, l.typeFullName)).toSet
+  }
+
+  def getSemIdentifiers(identifiers: mutable.Set[Identifier]): Set[SemIdentifier] = {
+    identifiers.map(l => SemIdentifier(l.name, l.typeFullName, l.label)).toSet
+  }
+
+}
 
 object MethodWrapper {
 

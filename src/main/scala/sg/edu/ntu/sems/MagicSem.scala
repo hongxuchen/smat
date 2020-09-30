@@ -1,18 +1,91 @@
 package sg.edu.ntu.sems
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.nodes.{Call, Literal, _}
-import io.shiftleft.semanticcpg.language.BaseNodeTypeDeco
-import sg.edu.ntu.ProjectMD
+import io.shiftleft.codepropertygraph.generated.nodes.{Literal, _}
+import io.shiftleft.semanticcpg.language.{BaseNodeTypeDeco, ICallResolver, NoResolve}
+import sg.edu.ntu.{Config, ProjectMD}
 import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
 import sg.edu.ntu.matching.Similarity
 
 import scala.collection.mutable
+import scala.util.matching.Regex
 
-final case class MagicSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
+object SemLiteral {
+  val ignoredStrLiteralPattern: Regex = "%(d|u|lu|ul|s)".r
+  val ignoredStrLiterals = List("ERROR")
 
-  val features: Array[MetricsTy] = {
-    ???
+  def literalFilter(l: Literal): Boolean = {
+    l.typeFullName match {
+      case "INT" => {
+        val v = l.code.toInt
+        v > 4
+      }
+      case "CHAR" => {
+        true
+      }
+      case "FLOAT" => {
+        true
+      }
+      case "DOUBLE" => {
+        true
+      }
+      case "STRING" => {
+        val s = l.code.toUpperCase
+        s.length < Config.LiteralLen &&
+          !ignoredStrLiterals.exists(s.contains(_)) &&
+          ignoredStrLiteralPattern.findFirstIn(s).isEmpty
+      }
+      case _ => {
+        logger.warn(s"unknown literal: ${l.code}:${l.typeFullName}")
+        true
+      }
+    }
+  }
+}
+
+case class SemLiteral(code: String, typeName: String)
+
+case class SemIdentifier(name: String, typeFullName: String, label: String)
+
+case class SpecialCalledArgsSM(sl: mutable.Set[Literal], si: mutable.Set[Identifier])
+
+final case class MagicSem(projectMD: ProjectMD, cpg: Cpg, smms: List[SemMethod]) extends SMSem {
+
+  implicit val myResolve: ICallResolver = NoResolve
+
+  private val m2args = CpgWrapper.getAllFuncs(cpg).map(m => {
+    m -> getCallSpecialArgs(m)
+  }).toMap
+  val literals: mutable.Set[Literal] = m2args.values.flatMap(_.sl).to(mutable.Set)
+  val identifiers: mutable.Set[Identifier] = m2args.values.flatMap(_.si).to(mutable.Set)
+  val semLiterals: Set[SemLiteral] = CpgWrapper.getSemLiterals(literals)
+  val semIdentifiers: Set[SemIdentifier] = CpgWrapper.getSemIdentifiers(identifiers)
+
+  val file2methods: Map[String, Set[Method]] = smms.map { m =>
+    m.m.filename -> m.m
+  }.groupBy(_._1).view.mapValues(_.map(_._2).toSet).toMap
+
+  val metrics: Array[MetricsTy] = {
+    val constM: MetricsTy = Math.min(literals.size + identifiers.size, Config.ConstMax)
+    val SemConstM: MetricsTy = Math.min(semLiterals.size + semIdentifiers.size, Config.SemConstMax)
+    val fileM: MetricsTy = Math.min(file2methods.size, Config.FileMax) / Config.FileF
+    Array(constM, SemConstM, fileM)
+
+  }
+
+  val fileNum: MetricsTy = file2methods.size
+
+  def getCallSpecialArgs(m: Method): SpecialCalledArgsSM = {
+    val (sl, si) = m.start.call.map { call =>
+      CpgWrapper.getSpecialArgs(call, SemLiteral.literalFilter)
+    }.l.head
+    SpecialCalledArgsSM(sl, si)
+  }
+
+  def getSpecialCallArgs: Map[Method, SpecialCalledArgsSM] = {
+    CpgWrapper.getAllFuncs(cpg).map(m => {
+      m -> getCallSpecialArgs(m)
+    }).toMap
   }
 
   override def dumpAll(): Unit = {
@@ -20,47 +93,8 @@ final case class MagicSem(projectMD: ProjectMD, cpg: Cpg) extends SMSem {
   }
 
   override def calculateSim(other: MagicSem.this.type): ScoreTy = {
-    Similarity.getCosineSim(features, other.features)
+    val s1 = Similarity.getJaccardSim(semIdentifiers, other.semIdentifiers)
+    val s2 = Similarity.getCosineSim(metrics, other.metrics)
+    (s1 + s2) / 2.0
   }
-}
-
-object MagicSem {
-
-  def getSpecialArgs(call: Call, filter: Literal => Boolean = _ => true): (mutable.Set[Literal], mutable.Set[Identifier]) = {
-
-    val literals: mutable.Set[Literal] = mutable.Set.empty
-    val identifiers: mutable.Set[Identifier] = mutable.Set.empty
-
-    call.start.argument.map {
-      case id: Identifier => {
-        if (id.name.toUpperCase == id.name) {
-          identifiers.add(id)
-        }
-      }
-      case literal: Literal => {
-        if (filter(literal)) {
-          literals.add(literal)
-        }
-      }
-    }
-    (literals, identifiers)
-  }
-
-  def getUniqueLiterals(literals: mutable.Set[Literal]): Set[Literal] = {
-    def literalKey(l: Literal): Int = {
-      l.code.hashCode + 3 * l.typeFullName.hashCode
-    }
-
-    literals.map(l => (literalKey(l), l)).toMap.values.toSet
-  }
-
-  def getUniqueIdentifiers(identifiers: mutable.Set[Identifier]): Set[Identifier] = {
-    def identifierKey(id: Identifier): Int = {
-      id.name.hashCode + 3 * id.typeFullName.hashCode + id.label.hashCode
-    }
-
-    identifiers.map(id => (identifierKey(id), id)).toMap.values.toSet
-  }
-
-
 }

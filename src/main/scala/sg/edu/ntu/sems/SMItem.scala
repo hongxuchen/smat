@@ -5,7 +5,6 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes
 import io.shiftleft.codepropertygraph.generated.nodes.{ControlStructure, Method}
 import io.shiftleft.semanticcpg.dotgenerator.Shared.Edge
-import io.shiftleft.semanticcpg.language.toNodeTypeStarters
 import sg.edu.ntu.ProjectMD
 import sg.edu.ntu.TypeDefs.MetricsTy
 import sg.edu.ntu.matching.ScoredProj
@@ -134,20 +133,7 @@ case class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) extends Seriali
 
 object SMItem {
 
-  def getInterestingFuncs(cpg: Cpg): List[Method] = {
-    cpg.method.internal.where(m => !MethodWrapper.isIgnoredMethod(m)).l
-  }
-
-  def getAllFuncs(cpg: Cpg): List[Method] = {
-    cpg.method.internal.l
-  }
-
-  def getConstFuncs(cpg: Cpg): List[Method] = {
-    cpg.method.internal.where { m =>
-      !m.signature.contains("const") && MethodWrapper.callOutsAreConst(m) && MethodWrapper.parameterOpsAreConst(m)
-    }.toList()
-
-  }
+  import CpgWrapper._
 
   def getSemMethods(cpg: Cpg): List[SemMethod] = {
     val methods: List[Method] = getInterestingFuncs(cpg)
@@ -164,7 +150,7 @@ object SMItem {
   def apply(projectMD: ProjectMD, cpg: Cpg): SMItem = {
     val semMethods = getSemMethods(cpg)
     val smItem = new SMItem(projectMD, ListBuffer.empty)
-    val magicSem = MagicSem(projectMD, cpg)
+    val magicSem = MagicSem(projectMD, cpg, semMethods)
     smItem.appendSem(magicSem)
     val interSem = InterFuncSem(projectMD, getAllFuncs(cpg), semMethods)
     smItem.appendSem(interSem)

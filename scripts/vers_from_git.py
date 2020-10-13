@@ -5,10 +5,10 @@ import sys
 from git import Repo, GitError
 import argparse
 import re
-import logging
 import shutil
+from utilities import config_logger
 
-recent_releases = 10
+recent_releases = 20
 record_file = "versions.txt"
 
 
@@ -88,16 +88,6 @@ def get_repo_maps(indir, outdir):
             repo_maps[in_repo] = out_repo
     return repo_maps
 
-
-def config_logger():
-    logger = logging.getLogger()
-    handler = logging.StreamHandler()
-    # formatter = logging.Formatter('%(levelname)-6s %(message)s')
-    formatter = logging.Formatter('%(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    return logger
 
 
 def main():

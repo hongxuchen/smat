@@ -33,6 +33,6 @@ object Config {
   val FileMax: Int = 50
   val FileF: Int = 5
 
-  val InnerFeatures: Int = 10
+  val InnerFeaturesFuncN: Int = 10
   val ScoreTops: Int = 10
 }

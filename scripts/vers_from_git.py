@@ -6,10 +6,12 @@ from git import Repo, GitError
 import argparse
 import re
 import shutil
-from utilities import config_logger
+from utilities import config_logger, rm
 
-recent_releases = 20
+recent_releases = 15
 record_file = "versions.txt"
+
+I_TAGS = {"alpha", "beta", "rc", "pre", "post"}
 
 
 # input: in_dir with a few git projects
@@ -35,9 +37,15 @@ def parse_args():
     )
     return parser.parse_args()
 
+def should_keep(tag):
+    tag_name = tag.name.lower()
+    exists_ignored = any(i in tag_name for i in I_TAGS)
+    return not exists_ignored
+
 
 def get_git_sorted_tags(repo: Repo):
     sorted_tags = sorted(repo.tags, key=lambda t: t.commit.committed_datetime, reverse=True)
+    sorted_tags = list(filter(should_keep, sorted_tags))
     return sorted_tags
 
 
@@ -47,6 +55,7 @@ def normalize_tag(tag):
 
 
 def copy_releases(repo: Repo, tags, dest_par):
+    cur_commit = repo.head.object.hexsha
     recorded_tag_num = min(len(tags), recent_releases)
     recorded_tags = tags[:recorded_tag_num]
     repo_dir = os.path.abspath(os.path.join(repo.common_dir, os.pardir))
@@ -56,24 +65,16 @@ def copy_releases(repo: Repo, tags, dest_par):
         hexsha = tc.hexsha
         repo.git.checkout(tag)
         tag_name = normalize_tag(tag.name)
-        logger.info("{:<12} {:>42}\t{}".format(tag_name, hexsha, time_str))
+        logger.info("{:<20} {:>42}\t{}".format(tag_name, hexsha, time_str))
         dest_repo = os.path.join(dest_par, tag_name)
         shutil.copytree(repo_dir, dest_repo)
         logger.debug("{} => {}".format(repo_dir, dest_repo))
-
-
-def rm(path):
-    """ param <path> could either be relative or absolute. """
-    if os.path.isfile(path) or os.path.islink(path):
-        os.remove(path)  # remove the file
-    elif os.path.isdir(path):
-        shutil.rmtree(path)  # remove dir and all contains
-    else:
-        raise ValueError("file {} is not a file or dir.".format(path))
+    repo.git.checkout(cur_commit)
 
 
 def get_repo_maps(indir, outdir):
     if os.path.exists(outdir):
+        logger.info("cleaning outdir={}".format(outdir))
         rm(outdir)
     repo_maps = {}
     for d in os.listdir(indir):
@@ -103,5 +104,6 @@ def main():
             print("Exception on {}, {}".format(in_repo, type(e)))
 
 
-logger = config_logger()
-main()
+if __name__ == "__main__":
+    logger = config_logger()
+    main()

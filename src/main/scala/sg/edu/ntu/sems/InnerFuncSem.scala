@@ -16,7 +16,7 @@ final case class InnerFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) exten
   }
 
   val featureList: List[Array[MetricsTy]] = {
-    val len = Math.min(smms.length, Config.InnerFeatures)
+    val len = Math.min(smms.length, Config.InnerFeaturesFuncN)
     smms.take(len).map(smm => smm.asMethodFeatures)
   }
 

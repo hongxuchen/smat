@@ -6,13 +6,11 @@ import argparse
 import re
 import logging
 import shutil
-from utilities import config_logger
+from utilities import config_logger, rm
 
 SUFFIXES = {".c", ".cpp", ".cc"}
 I_PREFIXES = {".", "@", "CMakeFiles", "demo"}
 I_SUBWORDS = {"test"}
-
-logger = config_logger()
 
 
 def parse_args():
@@ -44,9 +42,11 @@ def _is_ignored_fprefix(fname):
         return True
     return False
 
+
 def is_interesting_dir(fpath):
     fname = os.path.basename(fpath)
     return not _is_ignored_fprefix(fname)
+
 
 def is_interesting_file(fpath):
     fname = os.path.basename(fpath)
@@ -58,9 +58,6 @@ def is_interesting_file(fpath):
     if fext not in SUFFIXES:
         return False
     return True
-
-
-dir2files = dict()
 
 
 def gen_d2f_walk(indir):
@@ -95,19 +92,39 @@ def gen_d2f(indir):
     if len(files) != 0:
         dir2files[indir] = files
 
+def copy_modules(indir, dir2files, outdir):
+    if os.path.isdir(outdir):
+        logger.info("cleanning outdir={}".format(outdir))
+        rm(outdir)
+    for k, v in dir2files.items():
+        rel_k = os.path.relpath(k, indir)
+        assert (not rel_k.startswith(os.path.sep) and not rel_k.startswith("."))
+        out_k = rel_k.replace(os.path.sep, "_")
+        out_dir = os.path.join(outdir, out_k)
+        print("*** " + k + " ===> " + out_dir)
+        os.makedirs(out_dir, exist_ok=False)
+        for vi in v:
+            in_fpath = os.path.join(k, vi)
+            out_fpath = os.path.join(out_dir, vi)
+            shutil.copyfile(in_fpath, out_fpath)
+            # print(out_fpath)
 
 
 def dump(dir2files):
+    i = 0
     for k, v in dir2files.items():
-        print("\n=== {}:\t{}".format(k, v))
-
+        i += 1
+        print("{})\t {}\t{}".format(i, k, len(v)))
 
 
 def main():
     args = parse_args()
     gen_d2f(args.indir)
-    dump(dir2files)
+    # dump(dir2files)
+    copy_modules(args.indir, dir2files, args.outdir)
 
 
 if __name__ == "__main__":
+    dir2files = dict()
+    logger = config_logger()
     main()

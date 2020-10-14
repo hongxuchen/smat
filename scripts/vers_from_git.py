@@ -6,7 +6,7 @@ from git import Repo, GitError
 import argparse
 import re
 import shutil
-from utilities import config_logger, rm, get_proj_name
+from utilities import config_logger, rm, get_proj_name, dump_records
 from collections import defaultdict
 
 recent_releases = 10
@@ -15,6 +15,7 @@ record_fpath = "records.json"
 I_TAGS = {"alpha", "beta", "rc", "pre", "post"}
 I_FILES = {"BAK"}
 
+I_CHARS = ['.', '_', 'v', '-']
 
 # input: in_dir with a few git projects
 # outpout: out_dir/proj/versions
@@ -50,24 +51,37 @@ def get_git_sorted_tags(repo: Repo):
     sorted_tags = list(filter(should_keep, sorted_tags))
     return sorted_tags
 
+def normalized_tag(tag, proj_name):
+    assert proj_name.islower()
+    tag = tag.lower()
+    if tag.startswith(proj_name):
+        tag = tag[len(proj_name):]
+    while any([tag.startswith(c) for c in I_CHARS]):
+        tag = tag[1:]
+    return tag.replace("_", ".")
 
-def normalize_tag(tag):
-    normalized = tag.replace("_", ".")
-    return normalized
 
-
-def copy_releases(repo: Repo, tags, dest_par):
+def copy_releases(repo: Repo, proj_name, tags, dest_par):
     cur_commit = repo.head.object.hexsha
     recorded_tag_num = min(len(tags), recent_releases)
-    recorded_tags = tags[:recorded_tag_num]
     repo_dir = os.path.abspath(os.path.join(repo.common_dir, os.pardir))
-    pairs = []
-    for tag in recorded_tags:
+    proj_info = []
+    recorded_len = 0
+    existing_hexshas = dict()
+    for tag in tags:
+        if recorded_len == recorded_tag_num:
+            break
         tc = tag.commit
         time_str = tc.committed_datetime.strftime("%Y%d%m-%H:%M%S")
         hexsha = tc.hexsha
+        if hexsha not in existing_hexshas:
+            existing_hexshas[hexsha] = tag.name
+            recorded_len += 1
+        else:
+            logger.info("{} ({}), cur_tag={}; ignoring".format(hexsha, existing_hexshas[hexsha], tag.name))
+            continue 
         repo.git.checkout(tag)
-        tag_name = normalize_tag(tag.name)
+        tag_name = normalized_tag(tag.name, proj_name)
         logger.info("{:<20} {:>42}\t{}".format(tag_name, hexsha, time_str))
         dest_repo = os.path.join(dest_par, tag_name)
         try:
@@ -82,9 +96,9 @@ def copy_releases(repo: Repo, tags, dest_par):
                         raise
 
         logger.debug("{} => {}".format(repo_dir, dest_repo))
-        pairs.append((dest_repo, tag_name))
+        proj_info.append(dest_repo)
     repo.git.checkout(cur_commit)
-    return pairs
+    return proj_info
 
 
 def get_repo_maps(indir, outdir):
@@ -105,11 +119,6 @@ def get_repo_maps(indir, outdir):
             repo_maps[in_repo] = out_repo
     return repo_maps
 
-def dump_records(fpath, data):
-    from utility import dump_to_json
-    dump_to_json(fpath, data)
-    logger.info(f"records saved into \"{fpath}\"")
-
 def main():
     args = parse_args()
     repo_maps = get_repo_maps(args.indir, args.outdir)
@@ -119,13 +128,13 @@ def main():
             print(f"\nanalyzing {in_repo}")
             repo = Repo(in_repo)
             sorted_tags = get_git_sorted_tags(repo)
-            pairs = copy_releases(repo, sorted_tags, out_repo)
             proj_name = get_proj_name(in_repo)
-            proj2tag[proj_name] = pairs
+            proj_info = copy_releases(repo, proj_name, sorted_tags, out_repo)
+            proj2tag[proj_name] = proj_info
         except GitError as e:
             print("Exception on {}, {}".format(in_repo, type(e)))
     dump_records(record_fpath, proj2tag)
-
+    logger.info(f"records saved into \"{record_fpath}\"")
 
 
 if __name__ == "__main__":

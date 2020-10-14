@@ -6,7 +6,7 @@ import argparse
 import re
 import logging
 import shutil
-from utilities import config_logger, rm, get_proj_name
+from utilities import config_logger, rm, get_proj_name, load_from_records
 
 SUFFIXES = {".c", ".cpp", ".cc"}
 I_PREFIXES = {".", "@", "CMakeFiles", "demo"}
@@ -119,14 +119,16 @@ def get_list_from_infile(fpath):
 
 def copy_based_on_list(infpath, outdir):
     summary = {}
-    flist = get_list_from_infile(infpath)
-    for fpath in flist:
-        proj_name = get_proj_name(fpath)
-        out_dir = os.path.join(outdir, proj_name)
-        dir2files = dict()
-        gen_d2f(fpath, dir2files)
-        copy_modules(fpath, dir2files, out_dir)
-        summary[proj_name] = len(dir2files)
+    proj2vers = load_from_records(infpath)
+    for proj_name in proj2vers:
+        for fpath in proj2vers[proj_name]:
+            ver = os.path.basename(fpath)
+            modular_proj = proj_name + "-" + ver
+            out_dir = os.path.join(outdir, modular_proj)
+            dir2files = dict()
+            gen_d2f(fpath, dir2files)
+            copy_modules(fpath, dir2files, out_dir)
+            summary[modular_proj] = len(dir2files)
     mod_len = sum([l for l in summary.values()])
     print("projects:{}, modules: {}".format(len(summary), mod_len))
 
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     logger = config_logger()
     args = parse_args()
     if os.path.isdir(args.infpath):
-        gen_d2f(args.indir, dir2files)
+        gen_d2f(args.infpath, dir2files)
         copy_modules(args.indir, dir2files, args.outdir)
     elif os.path.isfile(args.infpath):
         logger.info(f"copy based on file list, reading {args.infpath}")

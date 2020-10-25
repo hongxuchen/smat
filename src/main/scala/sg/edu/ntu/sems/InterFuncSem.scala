@@ -24,8 +24,8 @@ final case class InterFuncSem(projectMD: ProjectMD, methods: List[Method],
   private val allMethodNum: Int = methods.length
   private val semMethodNum: Int = smms.length
   private val recursiveMethodNum: Int = smms.count(_.isRecursive)
-  private val icallees: Int = smms.map(_.icallees.length).sum
-  private val icallers: Int = smms.map(_.icallers.length).sum
+  private val icallees: Int = smms.map(_.icallees.size).sum
+  private val icallers: Int = smms.map(_.icallers.size).sum
   private val deepLoopMethodNum: Int = smms.count(_.loopDepth > Config.LoopSmallMax)
   private val methodFileNum: Int = smms.map(_.m.filename).toSet.size
 

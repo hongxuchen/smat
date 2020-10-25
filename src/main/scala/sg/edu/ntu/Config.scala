@@ -1,29 +1,31 @@
 package sg.edu.ntu
 
+import sg.edu.ntu.TypeDefs.MetricsTy
+
 object Config {
-  val BASEF: Int = 10
-  val RecursiveF: Int = 20
+  val BASEF: MetricsTy = 10
+  val RecursiveF: MetricsTy = 20
   val SLocMax: Int = 150
-  val SLocF: Int = 15
+  val SLocF: MetricsTy = 15
   val SLocSmallMax: Int = 8
   val CcMax: Int = 10
   val CfgEdgeMax: Int = 30
-  val CfgEdgeF: Int = 3
+  val CfgEdgeF: MetricsTy = 3
   val CfgNodeMax: Int = CfgEdgeMax
-  val CfgNodeF: Int = 3
+  val CfgNodeF: MetricsTy = 3
   val ICalleeMax: Int = 10
   val ICallerMax: Int = ICalleeMax
   val ControlMax: Int = 30
-  val ControlF: Int = 3
+  val ControlF: MetricsTy = 3
   val BranchMax: Int = 20
-  val BranchF: Int = 2
+  val BranchF: MetricsTy = 2
   val LoopMax: Int = 20
-  val LoopW: Int = 2
+  val LoopF: MetricsTy = 2
   val LoopSmallMax: Int = 3
   val DeepLoopMax: Int = 10
-  val DeepLoopF: Int = 1
+  val DeepLoopF: MetricsTy = 1
   val SpecialCallMax: Int = 20
-  val SpecialCallF: Int = 2
+  val SpecialCallF: MetricsTy = 2
 
   val LiteralLen: Int = 20
   val ConstMax: Int = 20
@@ -35,4 +37,6 @@ object Config {
 
   val InnerFeaturesFuncN: Int = 10
   val ScoreTops: Int = 10
+
+  val PRECISION: Int = 1000000
 }

@@ -1,6 +1,6 @@
 package sg.edu.ntu.matching
 
-import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
+import sg.edu.ntu.TypeDefs.ScoreTy
 import sg.edu.ntu.{Config, ProjectMD}
 import smile.math.MathEx
 import smile.math.distance.JaccardDistance
@@ -20,9 +20,9 @@ object Similarity {
     MathEx.cos(aa, ab)
   }
 
-  def getCosineSim(aa: Array[MetricsTy], ab: Array[MetricsTy]): Double = {
-    getCosineSim(aa.map(_.toDouble), ab.map(_.toDouble))
-  }
+  //  def getCosineSim(aa: Array[MetricsTy], ab: Array[MetricsTy]): Double = {
+  //    getCosineSim(aa.map(_.toDouble), ab.map(_.toDouble))
+  //  }
 
 }
 

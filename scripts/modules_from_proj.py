@@ -7,10 +7,11 @@ import re
 import logging
 import shutil
 from utilities import config_logger, rm, get_proj_name, load_from_records
+from collections import defaultdict
 
 SUFFIXES = {".c", ".cpp", ".cc"}
 I_PREFIXES = {".", "@", "CMakeFiles", "demo"}
-I_SUBWORDS = {"test", "fuzz", "regress"}
+I_SUBWORDS = {"test", "fuzz", "regress", "example", "doc"}
 
 
 def parse_args():
@@ -91,13 +92,16 @@ def gen_d2f(indir, dir2files):
     if len(files) != 0:
         dir2files[indir] = files
 
-def copy_modules(indir, dir2files, outdir):
-    if os.path.isdir(outdir):
-        logger.info("==> cleanning outdir: {}".format(outdir))
+def copy_modules(indir, dir2files, outdir, cleaning):
+    if cleaning and os.path.isdir(outdir):
+        logger.info("==> cleaning outdir: {}".format(outdir))
         rm(outdir)
     for k, v in dir2files.items():
-        rel_k = os.path.relpath(k, indir)
-        assert (not rel_k.startswith(os.path.sep) and not rel_k.startswith("."))
+        pardir = os.path.dirname(os.path.dirname(indir))
+        rel_k = os.path.relpath(k, pardir)
+        if rel_k.startswith(os.path.sep) or rel_k.startswith("."):
+            print("k={}, pardir={}, rel_k={}".format(k, pardir, rel_k), file=sys.stderr)
+            sys.exit(1)
         out_k = rel_k.replace(os.path.sep, "_")
         out_dir = os.path.join(outdir, out_k)
         logger.debug(" ===> " + out_dir)
@@ -118,19 +122,24 @@ def get_list_from_infile(fpath):
 
 
 def copy_based_on_list(infpath, outdir):
-    summary = {}
+    if os.path.isdir(outdir):
+        logger.info("cleaning outdir: {}".format(outdir))
+        rm(outdir)
+    summary = defaultdict(int)
     proj2vers = load_from_records(infpath)
     for proj_name in proj2vers:
         for fpath in proj2vers[proj_name]:
-            ver = os.path.basename(fpath)
-            modular_proj = proj_name + "-" + ver
-            out_dir = os.path.join(outdir, modular_proj)
+            # ver = os.path.basename(fpath)
+            # modular_proj = proj_name + "-" + ver
+            # out_dir = os.path.join(outdir, modular_proj)
             dir2files = dict()
             gen_d2f(fpath, dir2files)
-            copy_modules(fpath, dir2files, out_dir)
-            summary[modular_proj] = len(dir2files)
-    mod_len = sum([l for l in summary.values()])
+            copy_modules(fpath, dir2files, outdir, cleaning=False)
+            summary[proj_name] += len(dir2files)
+    mod_len = sum([ml for ml in summary.values()])
     print("projects:{}, modules: {}".format(len(summary), mod_len))
+    for k, v in summary.items():
+        print("{} -> {}".format(k, v))
 
 
 
@@ -147,7 +156,7 @@ if __name__ == "__main__":
     args = parse_args()
     if os.path.isdir(args.infpath):
         gen_d2f(args.infpath, dir2files)
-        copy_modules(args.indir, dir2files, args.outdir)
+        copy_modules(args.indir, dir2files, args.outdir, cleaning=True)
     elif os.path.isfile(args.infpath):
         logger.info(f"copy based on file list, reading {args.infpath}")
         copy_based_on_list(args.infpath, args.outdir)

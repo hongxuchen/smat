@@ -2,7 +2,7 @@ package sg.edu.ntu
 
 object TypeDefs {
 
-  type MetricsTy = Int
+  type MetricsTy = Double
   type ScoreTy = Double
 
 }

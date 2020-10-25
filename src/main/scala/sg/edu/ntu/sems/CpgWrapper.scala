@@ -80,7 +80,7 @@ object MethodWrapper {
   def sloc(m: Method): Option[Int] = {
     (m.lineNumber, m.lineNumberEnd) match {
       case (Some(start), Some(end)) => {
-        Some(end - start)
+        Some(end - start + 1)
       }
       case _ => None
     }
@@ -158,12 +158,12 @@ object MethodWrapper {
     * @param filter
     * @return immediate calless defined in this component
     */
-  def getICallees(m: Method, filter: Method => Boolean): List[Method] = {
-    m.start.callee.internal.where(m => filter(m)).l()
+  def getICallees(m: Method, filter: Method => Boolean): Set[Method] = {
+    m.start.callee.internal.where(m => filter(m)).toSet()
   }
 
-  def getICallers(m: Method, filter: Method => Boolean): List[Method] = {
-    m.start.caller.where(filter).l
+  def getICallers(m: Method, filter: Method => Boolean): Set[Method] = {
+    m.start.caller.where(filter).toSet()
   }
 
   def cfgStr(m: Method): String = m.start.dotCfg.l().head
@@ -184,7 +184,16 @@ object MethodWrapper {
 
   def getLoopDepths(m: Method): Int = {
     m.start.map { mm =>
-      mm.depth(ast => ast.isControlStructure)
+      mm.depth(ast => {
+        ast match {
+          case c: ControlStructure => {
+            val tName = c.parserTypeName
+            tName.startsWith("For") || tName.startsWith("While") || tName.startsWith("Do")
+          }
+          case _ => false
+        }
+
+      })
     }.l.head
   }
 

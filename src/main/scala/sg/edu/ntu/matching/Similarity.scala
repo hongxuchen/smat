@@ -1,7 +1,7 @@
 package sg.edu.ntu.matching
 
 import sg.edu.ntu.TypeDefs.ScoreTy
-import sg.edu.ntu.{Config, ProjectMD}
+import sg.edu.ntu.{Config, ModuleMD}
 import smile.math.MathEx
 import smile.math.distance.JaccardDistance
 
@@ -26,7 +26,7 @@ object Similarity {
 
 }
 
-case class ScoredProj(projectMD: ProjectMD, scores: List[ScoreTy])
+case class ScoredMod(moduleMD: ModuleMD, scores: List[ScoreTy])
 
 object Scoring {
 
@@ -45,7 +45,7 @@ object Scoring {
     (len to 1 by -1).map(i => i * diff + base).toList
   }
 
-  def getLen(sps: List[ScoredProj]): Int = {
+  def getLen(sps: List[ScoredMod]): Int = {
     require(sps.nonEmpty)
     val _len = sps.head.scores.length
     sps.foreach { sp =>
@@ -60,15 +60,15 @@ sealed trait Scoring {
 
   implicit val dOrdering: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
 
-  def sps: List[ScoredProj]
+  def sps: List[ScoredMod]
 
-  protected def sortedProjs: List[ProjectMD]
+  protected def sortedMods: List[ModuleMD]
 
-  def getTops(n: Int = Config.ScoreTops): List[ProjectMD] = sortedProjs.take(n)
+  def getTops(n: Int = Config.ScoreTops): List[ModuleMD] = sortedMods.take(n)
 
 }
 
-final case class NDimScoring(sps: List[ScoredProj]) extends Scoring {
+final case class NDimScoring(sps: List[ScoredMod]) extends Scoring {
 
 
   @tailrec
@@ -86,15 +86,15 @@ final case class NDimScoring(sps: List[ScoredProj]) extends Scoring {
     }
   }
 
-  override def sortedProjs: List[ProjectMD] = {
-    sps.sortWith { case (sp1: ScoredProj, sp2: ScoredProj) => {
+  override def sortedMods: List[ModuleMD] = {
+    sps.sortWith { case (sp1: ScoredMod, sp2: ScoredMod) => {
       greaterOrEq(sp1.scores, sp2.scores)
     }
-    }.map(_.projectMD)
+    }.map(_.moduleMD)
   }
 }
 
-final case class ThresholdScoring(sps: List[ScoredProj]) extends Scoring {
+final case class ThresholdScoring(sps: List[ScoredMod]) extends Scoring {
 
   val len: Int = Scoring.getLen(sps)
 
@@ -107,34 +107,38 @@ final case class ThresholdScoring(sps: List[ScoredProj]) extends Scoring {
     * @return
     */
   @tailrec
-  def threholdMatched(sorted: ListBuffer[ScoredProj], remain: ListBuffer[ScoredProj], thresholds: List[ScoreTy]): ListBuffer[ProjectMD] = {
+  def thresholdMatched(sorted: ListBuffer[ScoredMod], remain: ListBuffer[ScoredMod], thresholds: List[ScoreTy]): ListBuffer[ModuleMD] = {
     thresholds match {
       case Nil => {
         val sortIndex = len - 1
         sorted ++= remain.sortBy(_.scores(sortIndex))
-        println(s"*** ${sorted}")
-        sorted.map(_.projectMD)
+//        println(s"*** ${sorted}")
+        sorted.map(_.moduleMD)
       }
       case cur :: otherThresholds => {
         val sortIndex = len - 1 - otherThresholds.length
         val (toSort, newRemain) = remain.partition(x => {
-          println(s"== ${x.scores}, ${x.scores(sortIndex)}, ${cur}")
+//          println(s"== ${x.scores}, ${x.scores(sortIndex)}, ${cur}")
           x.scores(sortIndex) > cur
         })
         println(sortIndex, cur, toSort, newRemain)
         sorted ++= toSort.sortBy(_.scores(sortIndex))
-        threholdMatched(sorted, newRemain, otherThresholds)
+        thresholdMatched(sorted, newRemain, otherThresholds)
       }
     }
   }
 
-  override def sortedProjs: List[ProjectMD] = {
+  override def sortedMods: List[ModuleMD] = {
     val thresholds = Scoring.gridThresholdGen(len)
-    threholdMatched(ListBuffer.empty, sps.to(ListBuffer), thresholds).toList
+    thresholdMatched(ListBuffer.empty, sps.to(ListBuffer), thresholds).toList
   }
 }
 
-final case class WeightedScoring(sps: List[ScoredProj]) extends Scoring {
+/**
+  * weighted scoring approach
+  * @param sps
+  */
+final case class WeightedScoring(sps: List[ScoredMod]) extends Scoring {
 
   val len: Int = Scoring.getLen(sps)
 
@@ -142,11 +146,11 @@ final case class WeightedScoring(sps: List[ScoredProj]) extends Scoring {
     sl.zip(wl).map { case (s, w) => s * w }.sum
   }
 
-  override def sortedProjs: List[ProjectMD] = {
+  override def sortedMods: List[ModuleMD] = {
     val weights = Scoring.inverseWeightGen(len)
     sps.map { sp =>
       require(sp.scores.length == len)
-      sp.projectMD -> overallScore(sp.scores, weights)
+      sp.moduleMD -> overallScore(sp.scores, weights)
     }.sortBy(-_._2).map(_._1)
   }
 }

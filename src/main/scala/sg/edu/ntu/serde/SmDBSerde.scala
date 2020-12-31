@@ -3,15 +3,15 @@ package sg.edu.ntu.serde
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
 import org.slf4j.{Logger, LoggerFactory}
-import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.ModuleMD
 import sg.edu.ntu.sems.SMItem
 
 object SmDBSerde {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def load(projectMD: ProjectMD): SMItem = {
-    val smdbFile = Utils.getSMDBPath(projectMD)
+  def load(moduleMD: ModuleMD): SMItem = {
+    val smdbFile = Utils.getSMDBPath(moduleMD)
     val smdbfName = smdbFile.toString()
     load(smdbfName)
   }
@@ -24,7 +24,7 @@ object SmDBSerde {
   }
 
   def write(smItem: SMItem): Unit = {
-    val smdbFile = Utils.getSMDBPath(smItem.projectMD)
+    val smdbFile = Utils.getSMDBPath(smItem.moduleMD)
     val smdbfName = smdbFile.toString()
     write(smdbfName, smItem)
   }

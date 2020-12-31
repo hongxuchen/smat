@@ -3,9 +3,9 @@ package sg.edu.ntu.console
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.FuzzyC2Cpg
 import org.slf4j.LoggerFactory
-import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.ModuleMD
 import sg.edu.ntu.console.ScoreEnum.{NDim, Threshold, Weighted}
-import sg.edu.ntu.matching.{NDimScoring, ScoredProj, ThresholdScoring, WeightedScoring}
+import sg.edu.ntu.matching.{NDimScoring, ScoredMod, ThresholdScoring, WeightedScoring}
 import sg.edu.ntu.sems.SMItem
 import sg.edu.ntu.serde.{CpgLoader, SmDBSerde, Utils}
 
@@ -27,7 +27,7 @@ object Smat {
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
                           semMatch: Boolean = false,
                           smScoring: ScoreEnum.ScoreEnum = ScoreEnum.NDim,
-                          projectMD: ProjectMD = ProjectMD.DUMMY_PROJ,
+                          moduleMD: ModuleMD = ModuleMD.DUMMY_MODULE,
                           srcExts: Set[String] = defaultExts,
                           forceUpdateCPG: Boolean = false,
                           forceUpdateSM: Boolean = false,
@@ -41,7 +41,7 @@ object Smat {
     */
   def generateCpg(config: ParserConfig): Cpg = {
 
-    val cpgDB = Utils.getCpgDBPath(config.projectMD)
+    val cpgDB = Utils.getCpgDBPath(config.moduleMD)
     val cpgDBPathStr = cpgDB.toString()
 
     if (cpgDB.exists) {
@@ -89,7 +89,7 @@ object Smat {
     * @return an instance of `SMItem` for future usage
     */
   def generateSMDB(config: ParserConfig, cpg: Cpg): SMItem = {
-    val smdbPath = Utils.getSMDBPath(config.projectMD)
+    val smdbPath = Utils.getSMDBPath(config.moduleMD)
     val smdbFileName = smdbPath.toString()
     if (smdbPath.exists) {
       if (!config.forceUpdateSM) {
@@ -101,13 +101,13 @@ object Smat {
       }
     }
     logger.info("generating smdb...")
-    val smItem = SMItem(config.projectMD, cpg)
+    val smItem = SMItem(config.moduleMD, cpg)
     SmDBSerde.write(smItem)
     smItem
   }
 
   def dumpMatched(targetSmItem: SMItem, scoreEnum: ScoreEnum.Value): Unit = {
-    val sps: List[ScoredProj] = Utils.getSMDBFpaths.map { fpath =>
+    val sps: List[ScoredMod] = Utils.getSMDBFpaths.map { fpath =>
       val otherSmItem = SmDBSerde.load(fpath)
       targetSmItem.calculateSim(otherSmItem)
     }
@@ -130,10 +130,10 @@ object Smat {
         .unbounded()
         .text("source directories containing C/C++ code")
         .action((x, c) => c.copy(inputPaths = c.inputPaths + x))
-      opt[String]("proj")
-        .text("project metadata to be specified")
+      opt[String]("module")
+        .text("module metadata to be specified")
         .required()
-        .action((x, c) => c.copy(projectMD = ProjectMD(x)))
+        .action((x, c) => c.copy(moduleMD = ModuleMD(x)))
       opt[Unit]("force-update-cpg")
         .text("force update cpg")
         .action((_, c) => c.copy(forceUpdateCPG = true))
@@ -181,14 +181,15 @@ object Smat {
   def main(args: Array[String]): Unit = {
     val confOpt = parseConfig(args)
     confOpt.foreach { config =>
+//      SMItem.writeCfgToDot(config.ModuleMD,generateCpg(config))
       try {
         val cpg = generateCpg(config)
-        logger.info(s"create SMDB for ${config.projectMD}")
+        logger.info(s"create SMDB for ${config.moduleMD}")
         val smItem: SMItem = generateSMDB(config, cpg)
         smItem.dump()
         try {
           if (config.semMatch) {
-            logger.info(s"proceed with semantic matching against ${config.projectMD}")
+            logger.info(s"proceed with semantic matching against ${config.moduleMD}")
             dumpMatched(smItem, config.smScoring)
           }
         } finally {

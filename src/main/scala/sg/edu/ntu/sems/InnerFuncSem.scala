@@ -3,14 +3,14 @@ package sg.edu.ntu.sems
 import org.slf4j.{Logger, LoggerFactory}
 import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
 import sg.edu.ntu.matching.Similarity
-import sg.edu.ntu.{Config, ProjectMD}
+import sg.edu.ntu.{Config, ModuleMD}
 
-final case class InnerFuncSem(projectMD: ProjectMD, smms: List[SemMethod]) extends SMSem {
+final case class InnerFuncSem(moduleMD: ModuleMD, smms: List[SemMethod]) extends SMSem {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def dumpAll(): Unit = {
-    println(s"=== inner info for ${projectMD} ===")
+    println(s"=== inner info for ${moduleMD} ===")
     for ((m, i) <- smms.zipWithIndex) {
     }
   }

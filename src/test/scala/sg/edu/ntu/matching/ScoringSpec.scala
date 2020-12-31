@@ -3,7 +3,7 @@ package sg.edu.ntu.matching
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
-import sg.edu.ntu.ProjectMD
+import sg.edu.ntu.ModuleMD
 
 class ScoringSpec extends AnyFlatSpec with Matchers {
 
@@ -11,15 +11,15 @@ class ScoringSpec extends AnyFlatSpec with Matchers {
 
   def ~=(x: Double, y: Double, precision: Double = 0.001): Boolean = (x - y).abs < precision
 
-  val sps: List[ScoredProj] = {
-    List(ScoredProj(ProjectMD("hw-1.0"), List(0.7, 0.4, 0.1)),
-      ScoredProj(ProjectMD("hw-1.1"), List(0.55, 0.35, 0.9)),
-      ScoredProj(ProjectMD("hw-1.2"), List(0.5, 0.45, 0.6)))
+  val sps: List[ScoredMod] = {
+    List(ScoredMod(ModuleMD("hw-1.0"), List(0.7, 0.4, 0.1)),
+      ScoredMod(ModuleMD("hw-1.1"), List(0.55, 0.35, 0.9)),
+      ScoredMod(ModuleMD("hw-1.2"), List(0.5, 0.45, 0.6)))
   }
 
-  val m0 = List(ProjectMD("hw-1.0"), ProjectMD("hw-1.1"), ProjectMD("hw-1.2"))
-  val m1 = List(ProjectMD("hw-1.0"), ProjectMD("hw-1.2"), ProjectMD("hw-1.1"))
-  val m2 = List(ProjectMD("hw-1.1"), ProjectMD("hw-1.2"), ProjectMD("hw-1.0"))
+  val m0 = List(ModuleMD("hw-1.0"), ModuleMD("hw-1.1"), ModuleMD("hw-1.2"))
+  val m1 = List(ModuleMD("hw-1.0"), ModuleMD("hw-1.2"), ModuleMD("hw-1.1"))
+  val m2 = List(ModuleMD("hw-1.1"), ModuleMD("hw-1.2"), ModuleMD("hw-1.0"))
 
   val LEN = 3
 
@@ -31,7 +31,7 @@ class ScoringSpec extends AnyFlatSpec with Matchers {
   }
 
   "weighted scoring" should "weight" in {
-    WeightedScoring(sps).sortedProjs shouldBe m2
+    WeightedScoring(sps).sortedMods shouldBe m2
   }
 
   "threshold scoring" should "threshold" in {

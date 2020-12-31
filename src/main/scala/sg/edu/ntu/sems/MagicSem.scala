@@ -3,7 +3,7 @@ package sg.edu.ntu.sems
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{Literal, _}
 import io.shiftleft.semanticcpg.language.{BaseNodeTypeDeco, ICallResolver, NoResolve}
-import sg.edu.ntu.{Config, ProjectMD}
+import sg.edu.ntu.{Config, ModuleMD}
 import sg.edu.ntu.TypeDefs.{MetricsTy, ScoreTy}
 import sg.edu.ntu.matching.Similarity
 
@@ -49,7 +49,7 @@ case class SemIdentifier(name: String, typeFullName: String, label: String)
 
 case class SpecialCalledArgsSM(sl: mutable.Set[Literal], si: mutable.Set[Identifier])
 
-final case class MagicSem(projectMD: ProjectMD, cpg: Cpg, smms: List[SemMethod]) extends SMSem {
+final case class MagicSem(moduleMD: ModuleMD, cpg: Cpg, smms: List[SemMethod]) extends SMSem {
 
   implicit val myResolve: ICallResolver = NoResolve
 
@@ -89,7 +89,7 @@ final case class MagicSem(projectMD: ProjectMD, cpg: Cpg, smms: List[SemMethod])
   }
 
   override def dumpAll(): Unit = {
-    println(s"=== const info for ${projectMD} ===")
+    println(s"=== const info for ${moduleMD} ===")
   }
 
   override def calculateSim(other: MagicSem.this.type): ScoreTy = {

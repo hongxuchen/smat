@@ -3,7 +3,7 @@ package sg.edu.ntu.serde
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
 import org.slf4j.{Logger, LoggerFactory}
-import sg.edu.ntu.{ProjectMD, RawSuffix}
+import sg.edu.ntu.{ModuleMD, RawSuffix}
 
 object Utils {
 
@@ -18,26 +18,26 @@ object Utils {
     import better.files.Dsl._
     val dbDir = pwd / DB_DIR
     if (!dbDir.isDirectory) {
-      logger.info(s"${dbDir} not exists, creating...")
+      logger.info("{} not exists, creating...", dbDir)
       mkdir(dbDir)
     }
     dbDir
   }
 
-  def getCpgDBPath(projectMD: ProjectMD): better.files.File = {
-    getDBDir / projectMD.asCpgFileName
+  def getCpgDBPath(ModuleMd: ModuleMD): better.files.File = {
+    getDBDir / ModuleMd.asCpgFileName
   }
 
-  def getSMDBPath(projectMD: ProjectMD): better.files.File = {
-    getDBDir / projectMD.asSmFileName
+  def getSMDBPath(moduleMD: ModuleMD): better.files.File = {
+    getDBDir / moduleMD.asSmFileName
   }
 
   def getSMDBFpaths: List[String] = {
     getDBDir.list(_.`extension`.contains(".sm")).map(_.toString).toList.sorted
   }
 
-  def getCpgFromProjID(projectMD: ProjectMD): Option[Cpg] = {
-    val rawDB = getCpgDBPath(projectMD)
+  def getCpgFromModuleID(moduleMD: ModuleMD): Option[Cpg] = {
+    val rawDB = getCpgDBPath(moduleMD)
     if (rawDB.isRegularFile) {
       val rawDBPathStr = rawDB.toString()
       val cpg = CpgLoader.loadFromOdb(rawDBPathStr)

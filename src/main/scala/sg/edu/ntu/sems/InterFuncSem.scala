@@ -3,7 +3,7 @@ package sg.edu.ntu.sems
 import io.shiftleft.codepropertygraph.generated.nodes.Method
 import sg.edu.ntu.TypeDefs.ScoreTy
 import sg.edu.ntu.matching.Similarity
-import sg.edu.ntu.{Config, ProjectMD}
+import sg.edu.ntu.{Config, ModuleMD}
 
 import scala.collection.mutable
 
@@ -11,10 +11,10 @@ import scala.collection.mutable
   * this class stores the coarse grained features across functions
   * finally the semantic is a 1-dimention vector
   *
-  * @param projectMD
+  * @param moduleMD
   * @param smms
   */
-final case class InterFuncSem(projectMD: ProjectMD, methods: List[Method],
+final case class InterFuncSem(moduleMD: ModuleMD, methods: List[Method],
                               smms: List[SemMethod]) extends SMSem {
 
   val stdlib: Set[String] = _getCallees(_.stdlibCallees)
@@ -47,7 +47,7 @@ final case class InterFuncSem(projectMD: ProjectMD, methods: List[Method],
   }
 
   override def dumpAll(): Unit = {
-    println(s"=== inter info for ${projectMD} ===")
+    println(s"=== inter info for ${moduleMD} ===")
   }
 
   override def calculateSim(other: InterFuncSem.this.type): ScoreTy = {

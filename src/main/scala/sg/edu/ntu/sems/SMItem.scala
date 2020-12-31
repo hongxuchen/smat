@@ -3,18 +3,17 @@ package sg.edu.ntu.sems
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
-import sg.edu.ntu.ProjectMD
-import sg.edu.ntu.matching.ScoredProj
+import sg.edu.ntu.ModuleMD
+import sg.edu.ntu.matching.ScoredMod
 
 import scala.collection.mutable.ListBuffer
 
 
-
 @SerialVersionUID(100L)
-case class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) extends Serializable {
+case class SMItem(moduleMD: ModuleMD, sems: ListBuffer[SMSem]) extends Serializable {
 
   def appendSem(sem: SMSem): Unit = {
-    logger.info(s"adding ${sem.getClass} to ${projectMD}")
+    logger.info(s"adding ${sem.getClass} to ${moduleMD}")
     sems.append(sem)
   }
 
@@ -24,12 +23,13 @@ case class SMItem(projectMD: ProjectMD, sems: ListBuffer[SMSem]) extends Seriali
     }
   }
 
-  def calculateSim(other: SMItem): ScoredProj = {
+
+  def calculateSim(other: SMItem): ScoredMod = {
     val scores = this.sems.zip(other.sems).map { case (sm1, sm2) => {
       sm1.calculateSim(sm2.asInstanceOf[sm1.type])
     }
     }.toList
-    ScoredProj(other.projectMD, scores)
+    ScoredMod(other.moduleMD, scores)
   }
 }
 
@@ -45,19 +45,48 @@ object SMItem {
   /**
     * instance factory for `SMItem`, with all the semantic fields
     *
-    * @param projectMD
+    * @param moduleMD
     * @param cpg
     * @return
     */
-  def apply(projectMD: ProjectMD, cpg: Cpg): SMItem = {
+  def apply(moduleMD: ModuleMD, cpg: Cpg): SMItem = {
     val semMethods = getSemMethods(cpg)
-    val smItem = new SMItem(projectMD, ListBuffer.empty)
-    val magicSem = MagicSem(projectMD, cpg, semMethods)
+    val smItem = new SMItem(moduleMD, ListBuffer.empty)
+    val magicSem = MagicSem(moduleMD, cpg, semMethods)
     smItem.appendSem(magicSem)
-    val interSem = InterFuncSem(projectMD, getAllFuncs(cpg), semMethods)
+    val interSem = InterFuncSem(moduleMD, getAllFuncs(cpg), semMethods)
     smItem.appendSem(interSem)
-    val innerSem = InnerFuncSem(projectMD, semMethods)
+    val innerSem = InnerFuncSem(moduleMD, semMethods)
     smItem.appendSem(innerSem)
     smItem
   }
+
+  def writeCfgToDot(moduleMD: ModuleMD, cpg: Cpg): Unit = {
+    import better.files.Dsl._
+    import io.shiftleft.semanticcpg.language._
+    val dirName = "dots_" + moduleMD
+    val dir = sg.edu.ntu.serde.Utils.getDBDir / dirName
+    if (!dir.isDirectory) {
+      mkdir(dir)
+    }
+
+    cpg.method.internal.foreach{ m =>
+      logger.info(m.name + "\n" + m.start.dumpRaw.mkString)
+    }
+
+    val s = cpg.method("ObcCmdStatusMerge").dumpRaw.mkString
+    logger.info(s)
+
+    //    val semMethods = getSemMethods(cpg)
+//    for (m <- semMethods) {
+//      val method = m.m
+//      val s = method.start.dotCfg.l.head
+//      logger.info(method.start.dumpRaw.mkString)
+//      assert(s != null)
+//      val dotFilePath = dir / (m.m.name + ".dot")
+//      logger.info(s"${m.m.name} -> ${dotFilePath}")
+//      dotFilePath.write(s)
+//    }
+  }
+
 }

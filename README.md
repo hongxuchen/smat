@@ -30,5 +30,5 @@ Usage: Smat$ [options] <src-dir>
 
 Usage
 ======
-* To semantically model a project, run `./smat.sh --module=module1-1.0 /path/to/module-1.0`, where `module1` is typically a module in a project with a specific release version (1.0). For now, we require the input module to be of the form "[A-Za-z_]+-[0-9]+.[0-9]+". Afterwards, there will be `module-1.0.raw` ([code property graph](https://docs.shiftleft.io/core-concepts/code-property-graph)) and `module-1.0.sm` (our semantic model) inside `SMDB` directory.
-* To do the semantic match, given a module `moduleT-1.9`, run `./smat.sh --module=moduleT-1.9 -M` to generate `moduleT-1.9.raw` to match with the top-N similar resulting modules.
+* To semantically model a module, run `./smat.sh --module=module1-1.0 /path/to/module-1.0`, where `module1` is typically a module in a project with a specific release version (1.0). For now, we require the input module name to be of the format "[A-Za-z_]+-[0-9]+.[0-9]+". Afterwards, there will be `module-1.0.raw` ([code property graph](https://docs.shiftleft.io/core-concepts/code-property-graph)) and `module-1.0.sm` (our semantic model) inside `SMDB` directory.
+* To do the semantic match, given a module `moduleT-1.9`, run `./smat.sh --module=moduleT-1.9 -M` to generate `moduleT-1.9.sm` to match with the top-N similar resulting modules.

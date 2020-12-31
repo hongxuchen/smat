@@ -8,3 +8,4 @@ SMDB/
 venv/
 .ccls-cache/
 *.o
+records.json

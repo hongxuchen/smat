@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import os
-import sys
 import argparse
-import re
-import logging
+import os
 import shutil
-from utilities import config_logger, rm, get_proj_name, load_from_records
+import sys
 from collections import defaultdict
+
+from utilities import config_logger, rm, load_from_records
 
 SUFFIXES = {".c", ".cpp", ".cc"}
 I_PREFIXES = {".", "@", "CMakeFiles", "demo"}
@@ -26,7 +25,7 @@ def parse_args():
         help="input filepath for all the projects"
     )
     parser.add_argument(
-        "-o", "--utdir",
+        "-o", "--outdir",
         dest="outdir",
         required=True,
         help="output directory for generated projects"
@@ -53,8 +52,7 @@ def is_interesting_file(fpath):
     fname = os.path.basename(fpath)
     if _is_ignored_fprefix(fname):
         return False
-    fprefix, fext = os.path.splitext(fname)
-    fprefix = fprefix.lower()
+    _, fext = os.path.splitext(fname)
     fext = fext.lower()
     if fext not in SUFFIXES:
         return False
@@ -62,6 +60,11 @@ def is_interesting_file(fpath):
 
 
 def gen_d2f_walk(indir):
+    """
+    generation of directory-to-files mappings, with help of `walk`
+    :param indir: root directory to be analyzed
+    :return:
+    """
     for root, dirs, files in os.walk(indir, topdown=True):
         findir = []
         for fname in files:
@@ -69,13 +72,19 @@ def gen_d2f_walk(indir):
                 findir.append(fname)
             else:
                 logger.debug("{} ignored".format(os.path.join(root, fname)))
-        logger.debug("===> {}".format(findir))
+        logger.debug("==> {}".format(findir))
         if len(findir) != 0:
             dir2files[root] = findir
         dirs[:] = [d for d in dirs if is_interesting_dir(d)]
 
 
 def gen_d2f(indir, dir2files):
+    """
+    generation of directory-to-files mappings, recursively
+    :param indir:
+    :param dir2files:
+    :return:
+    """
     files = []
     for fname in os.listdir(indir):
         fpath = os.path.abspath(os.path.join(indir, fname))
@@ -91,6 +100,7 @@ def gen_d2f(indir, dir2files):
                 logger.debug("{} ignored".format(fpath))
     if len(files) != 0:
         dir2files[indir] = files
+
 
 def copy_modules(indir, dir2files, outdir, cleaning):
     if cleaning and os.path.isdir(outdir):
@@ -111,6 +121,7 @@ def copy_modules(indir, dir2files, outdir, cleaning):
             out_fpath = os.path.join(out_dir, vi)
             shutil.copyfile(in_fpath, out_fpath)
             # print(out_fpath)
+
 
 def get_list_from_infile(fpath):
     flist = []
@@ -140,7 +151,6 @@ def copy_based_on_list(infpath, outdir):
     print("projects:{}, modules: {}".format(len(summary), mod_len))
     for k, v in summary.items():
         print("{} -> {}".format(k, v))
-
 
 
 def dump(dir2files):

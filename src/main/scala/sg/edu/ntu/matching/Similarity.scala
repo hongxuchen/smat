@@ -3,17 +3,17 @@ package sg.edu.ntu.matching
 import sg.edu.ntu.TypeDefs.ScoreTy
 import sg.edu.ntu.{Config, ModuleMD}
 import smile.math.MathEx
-import smile.math.distance.JaccardDistance
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import scala.jdk.CollectionConverters._
 import scala.math.Ordering.Double
 
 object Similarity {
 
   def getJaccardSim[A](sa: Set[A], sb: Set[A]): Double = {
-    JaccardDistance.d(sa.asJava, sb.asJava)
+    val union = sa.union(sb)
+    val intersect = sa.intersect(sb)
+    (intersect.size + 1).toDouble / (union.size + 1).toDouble
   }
 
   def getCosineSim(aa: Array[Double], ab: Array[Double]): Double = {
@@ -112,13 +112,13 @@ final case class ThresholdScoring(sps: List[ScoredMod]) extends Scoring {
       case Nil => {
         val sortIndex = len - 1
         sorted ++= remain.sortBy(_.scores(sortIndex))
-//        println(s"*** ${sorted}")
+        //        println(s"*** ${sorted}")
         sorted.map(_.moduleMD)
       }
       case cur :: otherThresholds => {
         val sortIndex = len - 1 - otherThresholds.length
         val (toSort, newRemain) = remain.partition(x => {
-//          println(s"== ${x.scores}, ${x.scores(sortIndex)}, ${cur}")
+          //          println(s"== ${x.scores}, ${x.scores(sortIndex)}, ${cur}")
           x.scores(sortIndex) > cur
         })
         println(sortIndex, cur, toSort, newRemain)
@@ -136,6 +136,7 @@ final case class ThresholdScoring(sps: List[ScoredMod]) extends Scoring {
 
 /**
   * weighted scoring approach
+  *
   * @param sps
   */
 final case class WeightedScoring(sps: List[ScoredMod]) extends Scoring {

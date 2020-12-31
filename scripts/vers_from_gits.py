@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-from git import Repo, GitError
 import argparse
-import re
+import os
 import shutil
-from utilities import config_logger, rm, get_proj_name, dump_records
-from collections import defaultdict
 
-recent_releases = 10
+from git import Repo, GitError
+
+from utilities import config_logger, rm, get_proj_name, dump_records
+
 record_fpath = "records.json"
 
 I_TAGS = {"alpha", "beta", "rc", "pre", "post"}
@@ -17,20 +15,24 @@ I_FILES = {"BAK"}
 
 I_CHARS = ['.', '_', 'v', '-']
 
-# input: in_dir with a few git projects
-# outpout: out_dir/proj/versions
 
+verbose_desc = """
+Given an input directory `indir`, it should contain a few git projects (`proj1`, `proj2`, ...), each of which has several git tags.\n
+after processing, the output directory `outdir` should contain several subdirectories, named with `proj1`, `proj2`, ...;
+and insider each proj (e.g., `proj1`), there should be several directories which represent different versions of the project.
+output structure: outdir/proj/versions
+"""
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="utility to create releases based on git tags",
+        description="A utility to create releases of projects based on git tags from different git repositories\n" + verbose_desc,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
         "-i", "--indir",
         dest="indir",
         required=True,
-        help="input directory for all the projects"
+        help="input directory which contains all the git projects"
     )
     parser.add_argument(
         "-o", "--outdir",
@@ -38,7 +40,15 @@ def parse_args():
         required=True,
         help="output directory for generated projects"
     )
+    parser.add_argument(
+        "-n", "--releases",
+        dest="releases",
+        required=False,
+        default=10,
+        help="specified number of release tags"
+    )
     return parser.parse_args()
+
 
 def should_keep(tag):
     tag_name = tag.name.lower()
@@ -51,6 +61,7 @@ def get_git_sorted_tags(repo: Repo):
     sorted_tags = list(filter(should_keep, sorted_tags))
     return sorted_tags
 
+
 def normalized_tag(tag, proj_name):
     assert proj_name.islower()
     tag = tag.lower()
@@ -61,9 +72,9 @@ def normalized_tag(tag, proj_name):
     return tag.replace("_", ".")
 
 
-def copy_releases(repo: Repo, proj_name, tags, dest_par):
+def copy_releases(repo: Repo, proj_name, tags, dest_par, releases):
     cur_commit = repo.head.object.hexsha
-    recorded_tag_num = min(len(tags), recent_releases)
+    recorded_tag_num = min(len(tags), releases)
     repo_dir = os.path.abspath(os.path.join(repo.common_dir, os.pardir))
     proj_info = []
     recorded_len = 0
@@ -79,7 +90,7 @@ def copy_releases(repo: Repo, proj_name, tags, dest_par):
             recorded_len += 1
         else:
             logger.info("{} ({}), cur_tag={}; ignoring".format(hexsha, existing_hexshas[hexsha], tag.name))
-            continue 
+            continue
         repo.git.checkout(tag)
         tag_name = normalized_tag(tag.name, proj_name)
         logger.info("{:<20} {:>42}\t{}".format(tag_name, hexsha, time_str))
@@ -119,17 +130,19 @@ def get_repo_maps(indir, outdir):
             repo_maps[in_repo] = out_repo
     return repo_maps
 
+
 def main():
     args = parse_args()
     repo_maps = get_repo_maps(args.indir, args.outdir)
     proj2tag = dict()
+    print("indir={}, outdir={}, versions={}".format(args.indir, args.outdir, args.releases))
     for (in_repo, out_repo) in repo_maps.items():
         try:
             print(f"\nanalyzing {in_repo}")
             repo = Repo(in_repo)
             sorted_tags = get_git_sorted_tags(repo)
             proj_name = get_proj_name(in_repo)
-            proj_info = copy_releases(repo, proj_name, sorted_tags, out_repo)
+            proj_info = copy_releases(repo, proj_name, sorted_tags, out_repo, args.releases)
             proj2tag[proj_name] = proj_info
         except GitError as e:
             print("Exception on {}, {}".format(in_repo, type(e)))

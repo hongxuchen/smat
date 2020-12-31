@@ -40,13 +40,16 @@ def dump_to_toml(fpath, data):
         s = toml.dumps(data)
         toml_file.write(s)
 
+
 def load_from_json(fpath):
     import json
     with open(fpath, "r") as json_file:
         return json.load(json_file)
 
+
 def dump_records(fpath, data):
     dump_to_json(fpath, data)
+
 
 def load_from_records(fpath):
     return load_from_json(fpath)

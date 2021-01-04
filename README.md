@@ -40,10 +40,31 @@ During evaluation, we resort to `openssl`, `libressl`, `gnutls` and `libjpeg-tur
 model and additionally `boringssl` for semantic matching.
 
 The modules used in semantic modeling phrase are generated in two steps:
-* `python ./scripts/vers_from_gits.py -i ../indir -o ../outdir` to get the different release versions 
+* `python ./scripts/vers_from_gits.py -i ../indir -o ../outdir` to get the different release versions
  of the corresponding projects. A json file `records.json` will be created when it succeeds.
-* `python ./scripts/modules_from_projs.py -i ./records.json ../modules` (or `python ./scripts/modules_from_projs.py -i ../outdir -o ../modules`) to get the "modules" which are 
+* `python ./scripts/modules_from_projs.py -i ./records.json ../modules` (or `python ./scripts/modules_from_projs.py -i ../outdir -o ../modules`) to get the "modules" which are
 based on directory structures -- since this is only for proof of our matching work,
  no fantastic [clustering algorithms](https://www.cs.purdue.edu/homes/lintan/publications/archrec-tse17.pdf) are applied.
 
- 
+
+## Repos
+* openssl: https://github.com/openssl/openssl.git
+* boringssl: https://github.com/google/boringssl.git
+* gnutls: https://github.com/gnutls/gnutls.git (w/o devel/openssl)
+* libressl: https://github.com/libressl-portable/openbsd.git (only src/lib)
+* libjpeg-turbo: https://github.com/libjpeg-turbo/libjpeg-turbo.git
+* mozjpeg: https://github.com/mozilla/mozjpeg.git
+
+## Semantic Modeling
+
+The modules used in semantic modeling phrase are generated in two steps:
+* `python ./scripts/vers_from_gits.py -i ../indir -o ../outdir` to get the different release versions
+ of the corresponding projects. A json file `records.json` will be created when it succeeds.
+* `python ./scripts/modules_from_projs.py -i ./records.json ../modules` (or `python ./scripts/modules_from_projs.py -i ../outdir -o ../modules`) to get the "modules" which are
+based on directory structures -- since this is only for proof of our matching work,
+ no fantastic [clustering algorithms](https://www.cs.purdue.edu/homes/lintan/publications/archrec-tse17.pdf) are applied.
+
+## Semantic Matching
+* The modules for matching purpose come from `openssl`, `libressl`, `gnutls` and `libjpeg-turbo`, `mozjpeg` and `boringssl`. We deliberately choose releases that are NONE of the
+commits from the modeled versions (with git tags). The generation of these versions are done manually, and modules are extracted similarly with the help of `modules_from_projs.py`.
+* Run `./smat.sh --module=xxx_xxx module_dir -M` to get the matching results.

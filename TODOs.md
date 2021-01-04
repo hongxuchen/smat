@@ -17,5 +17,5 @@
     - [x] Fine Grained
     - [x] Project Specific
 * automation scripts
-  - [ ] `/usr/bin/fuzzyppcli` installation script
+  - [ ] [/usr/bin/fuzzyppcli](https://github.com/ShiftLeftSecurity/fuzzyc2cpg/releases) installation script (fuzzyppcli unused right now)
   - [ ] scoring automation

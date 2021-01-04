@@ -30,5 +30,20 @@ Usage: Smat$ [options] <src-dir>
 
 Usage
 ======
-* To semantically model a module, run `./smat.sh --module=module1-1.0 /path/to/module-1.0`, where `module1` is typically a module in a project with a specific release version (1.0). For now, we require the input module name to be of the format "[A-Za-z_]+-[0-9]+.[0-9]+". Afterwards, there will be `module-1.0.raw` ([code property graph](https://docs.shiftleft.io/core-concepts/code-property-graph)) and `module-1.0.sm` (our semantic model) inside `SMDB` directory.
-* To do the semantic match, given a module `moduleT-1.9`, run `./smat.sh --module=moduleT-1.9 -M` to generate `moduleT-1.9.sm` to match with the top-N similar resulting modules.
+* To semantically model a module, run `./smat.sh --module=module1_1.0 /path/to/module_1.0`, where `module1` is typically a module in a project with a specific release version (1.0). For now, we require the input module name to be of the format "[A-Za-z_]+_[0-9]+.[0-9]+". Afterwards, there will be `module_1.0.raw` ([code property graph](https://docs.shiftleft.io/core-concepts/code-property-graph)) and `module_1.0.sm` (our semantic model) inside `SMDB` directory.
+* To do the semantic match, given a module `moduleT_1.9`, run `./smat.sh --module=moduleT_1.9 -M` to generate `moduleT_1.9.sm` to match with the top-N similar resulting modules.
+
+
+Experimental Setup
+=================
+During evaluation, we resort to `openssl`, `libressl`, `gnutls` and `libjpeg-turbo`, `mozjpeg` for semantic
+model and additionally `boringssl` for semantic matching.
+
+The modules used in semantic modeling phrase are generated in two steps:
+* `python ./scripts/vers_from_gits.py -i ../indir -o ../outdir` to get the different release versions 
+ of the corresponding projects. A json file `records.json` will be created when it succeeds.
+* `python ./scripts/modules_from_projs.py -i ./records.json ../modules` (or `python ./scripts/modules_from_projs.py -i ../outdir -o ../modules`) to get the "modules" which are 
+based on directory structures -- since this is only for proof of our matching work,
+ no fantastic [clustering algorithms](https://www.cs.purdue.edu/homes/lintan/publications/archrec-tse17.pdf) are applied.
+
+ 

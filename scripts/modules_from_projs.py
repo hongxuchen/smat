@@ -106,21 +106,22 @@ def copy_modules(indir, dir2files, outdir, cleaning):
     if cleaning and os.path.isdir(outdir):
         logger.info("==> cleaning outdir: {}".format(outdir))
         rm(outdir)
+#     pardir = os.path.dirname(os.path.dirname(indir))
+    pardir = indir
     for k, v in dir2files.items():
-        pardir = os.path.dirname(os.path.dirname(indir))
         rel_k = os.path.relpath(k, pardir)
+        # print("k={}, pardir={}, rel_k={}".format(k, pardir, rel_k))
         if rel_k.startswith(os.path.sep) or rel_k.startswith("."):
-            print("k={}, pardir={}, rel_k={}".format(k, pardir, rel_k), file=sys.stderr)
+            print("INVALID relative path: k={}, pardir={}, rel_k={}".format(k, pardir, rel_k), file=sys.stderr)
             sys.exit(1)
         out_k = rel_k.replace(os.path.sep, "_")
         out_dir = os.path.join(outdir, out_k)
-        logger.debug(" ===> " + out_dir)
+        logger.info(k + " ==> " + out_dir)
         os.makedirs(out_dir, exist_ok=False)
         for vi in v:
             in_fpath = os.path.join(k, vi)
             out_fpath = os.path.join(out_dir, vi)
             shutil.copyfile(in_fpath, out_fpath)
-            # print(out_fpath)
 
 
 def get_list_from_infile(fpath):
@@ -145,7 +146,8 @@ def copy_based_on_list(infpath, outdir):
             # out_dir = os.path.join(outdir, modular_proj)
             dir2files = dict()
             gen_d2f(fpath, dir2files)
-            copy_modules(fpath, dir2files, outdir, cleaning=False)
+            base_dir = os.path.dirname(os.path.dirname(fpath))
+            copy_modules(base_dir, dir2files, outdir, cleaning=False)
             summary[proj_name] += len(dir2files)
     mod_len = sum([ml for ml in summary.values()])
     print("projects:{}, modules: {}".format(len(summary), mod_len))
@@ -164,9 +166,11 @@ if __name__ == "__main__":
     dir2files = dict()
     logger = config_logger()
     args = parse_args()
-    if os.path.isdir(args.infpath):
-        gen_d2f(args.infpath, dir2files)
-        copy_modules(args.indir, dir2files, args.outdir, cleaning=True)
-    elif os.path.isfile(args.infpath):
-        logger.info(f"copy based on file list, reading {args.infpath}")
-        copy_based_on_list(args.infpath, args.outdir)
+    infpath = os.path.abspath(args.infpath)
+    outdir = os.path.abspath(args.outdir)
+    if os.path.isdir(infpath):
+        gen_d2f(infpath, dir2files)
+        copy_modules(infpath, dir2files, outdir, cleaning=True)
+    elif os.path.isfile(infpath):
+        logger.info("copy based on file list, reading {}".format(infpath))
+        copy_based_on_list(infpath, outdir)

@@ -15,6 +15,8 @@ I_FILES = {"BAK"}
 
 I_CHARS = ['.', '_', 'v', '-']
 
+DEFAULT_VERS = 15
+
 
 verbose_desc = """
 Given an input directory `indir`, it should contain a few git projects (`proj1`, `proj2`, ...), each of which has several git tags.\n
@@ -44,7 +46,7 @@ def parse_args():
         "-n", "--releases",
         dest="releases",
         required=False,
-        default=10,
+        default=DEFAULT_VERS,
         help="specified number of release tags"
     )
     return parser.parse_args()
@@ -95,6 +97,7 @@ def copy_releases(repo: Repo, proj_name, tags, dest_par, releases):
         tag_name = normalized_tag(tag.name, proj_name)
         logger.info("{:<20} {:>42}\t{}".format(tag_name, hexsha, time_str))
         dest_repo = os.path.join(dest_par, tag_name)
+        dest_repo = os.path.abspath(dest_repo)
         try:
             shutil.copytree(src=repo_dir, dst=dest_repo, ignore_dangling_symlinks=True)
         except shutil.Error as e:
@@ -133,21 +136,24 @@ def get_repo_maps(indir, outdir):
 
 def main():
     args = parse_args()
-    repo_maps = get_repo_maps(args.indir, args.outdir)
+    indir = os.path.abspath(args.indir)
+    outdir = os.path.abspath(args.outdir)
+    kept_version = args.releases
+    repo_maps = get_repo_maps(indir, outdir)
     proj2tag = dict()
-    print("indir={}, outdir={}, versions={}".format(args.indir, args.outdir, args.releases))
+    print("indir={}, outdir={}, versions={}".format(indir, outdir, kept_version))
     for (in_repo, out_repo) in repo_maps.items():
         try:
             print(f"\nanalyzing {in_repo}")
             repo = Repo(in_repo)
             sorted_tags = get_git_sorted_tags(repo)
             proj_name = get_proj_name(in_repo)
-            proj_info = copy_releases(repo, proj_name, sorted_tags, out_repo, args.releases)
+            proj_info = copy_releases(repo, proj_name, sorted_tags, out_repo, kept_version)
             proj2tag[proj_name] = proj_info
         except GitError as e:
             print("Exception on {}, {}".format(in_repo, type(e)))
     dump_records(record_fpath, proj2tag)
-    logger.info(f"records saved into \"{record_fpath}\"")
+    logger.info(f"\nrecords saved into \"{record_fpath}\"\n")
 
 
 if __name__ == "__main__":

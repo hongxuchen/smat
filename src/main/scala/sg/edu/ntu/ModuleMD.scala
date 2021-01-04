@@ -11,11 +11,11 @@ case class ModuleMD(module: String, version: String) {
 
 object ModuleMD {
 
-  val DUMMY_MODULE: ModuleMD = ModuleMD("__DUMMY__", "__DUMMY__")
+  val DUMMY_MOD: ModuleMD = ModuleMD("__DUMMY__", "__DUMMY__")
 
   def apply(s: String): ModuleMD = {
-    val ss = s.split('-')
-    require(ss.length == 2)
+    val ss = s.split("_", 2)
+//    require(ss.length == 2)
     ModuleMD(ss(0), ss(1))
   }
 

@@ -27,7 +27,7 @@ object Smat {
   case class ParserConfig(inputPaths: Set[String] = Set.empty,
                           semMatch: Boolean = false,
                           smScoring: ScoreEnum.ScoreEnum = ScoreEnum.NDim,
-                          moduleMD: ModuleMD = ModuleMD.DUMMY_MODULE,
+                          moduleMD: ModuleMD = ModuleMD.DUMMY_MOD,
                           srcExts: Set[String] = defaultExts,
                           forceUpdateCPG: Boolean = false,
                           forceUpdateSM: Boolean = false,

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration status="info">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss} (%13F:%L) %p %c{0}: %msg%n"/>
@@ -8,11 +8,11 @@
     <Loggers>
         <Logger name="org.apache.tomcat" level="error"/>
         <Logger name="org.apache.jasper" level="error"/>
-        <Logger name="org.reflections" level="off" />
-        <Logger name="io.shiftleft.overflowdb" level="warn" />
-
-        <Root level="WARN">
-            <AppenderRef ref="Console" />
+        <Logger name="org.reflections" level="off"/>
+        <Logger name="io.shiftleft.overflowdb" level="warn"/>
+        <Logger name="io.shiftleft.fuzzyc2cpg" level="warn"/>
+        <Root level="warn">
+            <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
 </Configuration>

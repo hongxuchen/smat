@@ -181,7 +181,7 @@ object Smat {
   def main(args: Array[String]): Unit = {
     val confOpt = parseConfig(args)
     confOpt.foreach { config =>
-//      SMItem.writeCfgToDot(config.ModuleMD,generateCpg(config))
+      //      SMItem.writeCfgToDot(config.ModuleMD,generateCpg(config))
       try {
         val cpg = generateCpg(config)
         logger.info(s"create SMDB for ${config.moduleMD}")
@@ -198,6 +198,7 @@ object Smat {
       } catch {
         case NonFatal(ex) => {
           logger.error("error when generating CPG/SMDB", ex)
+          throw new RuntimeException(ex)
         }
       }
 

@@ -11,7 +11,7 @@ class SerdeSpecs extends AnyFlatSpec with Matchers {
 
   "loaded SMItem" should "be the same as serialized one" in {
 
-    val smItem = new SMItem(ModuleMD("hw-1.0"), ListBuffer.empty)
+    val smItem = new SMItem(ModuleMD("hw_1.0"), ListBuffer.empty)
 
     SmDBSerde.write(smItem)
     val loadedItem = SmDBSerde.load(smItem.moduleMD)

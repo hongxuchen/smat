@@ -24,5 +24,8 @@ for d in os.listdir(mod_d):
         print("WARN: {} not a directoty".format(d))
     mod_name = os.path.basename(d)
     cmd_str = "{} --module='{}' {}".format(smat_path, mod_name, d)
-    print(cmd_str)
-    subprocess.call(cmd_str.split())
+    print("CMD: " + cmd_str)
+    rc = subprocess.call(cmd_str.split())
+    if rc != 0:
+        print("failed with rc={}".format(rc))
+        sys.exit(1)

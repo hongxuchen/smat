@@ -31,7 +31,7 @@ class SemMethodSpecs extends CodeToCpgSuite {
       |  if (argc > 3) {
       |  foo(argc);
       | } else {
-      |   foo(argc + 3)
+      |   foo(argc + 3);
       | }
       | return 0;
       |}
@@ -67,8 +67,8 @@ class SemMethodSpecs extends CodeToCpgSuite {
     val mainMethod = cpg.method("main").head()
     val semMain = SemMethod(mainMethod)
 
-    semMain.cfgEdges.length shouldBe 5
-    semMain.cfgNodes.length shouldBe 3
+    semMain.cfgEdges.length shouldBe 7
+    semMain.cfgNodes.length shouldBe 5
     val controls = semMain.controls
     controls.length shouldBe 2
     val control = controls.head
@@ -84,7 +84,7 @@ class SemMethodSpecs extends CodeToCpgSuite {
     semMain.sCall.syscallsCallees shouldBe Set.empty
     semMain.sCall.stdlibCallees shouldBe Set.empty
 
-    semMain.asMethodFeatures shouldBe (Array(8 / 15.0, 5 / 3.0, 1.0, 4.0, 1.0, 2 / 3.0, 0, 0, 0, 1.0, 0, 0))
+    semMain.asMethodFeatures shouldBe (Array(8 / 15.0, 7 / 3.0, 5.0 / 3.0, 4.0, 1.0, 2 / 3.0, 0, 0, 0, 1.0, 0, 0))
 
   }
 

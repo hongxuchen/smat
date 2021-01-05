@@ -181,7 +181,6 @@ object Smat {
   def main(args: Array[String]): Unit = {
     val confOpt = parseConfig(args)
     confOpt.foreach { config =>
-      //      SMItem.writeCfgToDot(config.ModuleMD,generateCpg(config))
       try {
         val cpg = generateCpg(config)
         logger.info(s"create SMDB for ${config.moduleMD}")

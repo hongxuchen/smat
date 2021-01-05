@@ -3,6 +3,7 @@ package sg.edu.ntu.sems
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Method
+import io.shiftleft.semanticcpg.language.{ICallResolver, NoResolve}
 import sg.edu.ntu.ModuleMD
 import sg.edu.ntu.matching.ScoredMod
 
@@ -51,6 +52,11 @@ object SMItem {
     */
   def apply(moduleMD: ModuleMD, cpg: Cpg): SMItem = {
     val semMethods = getSemMethods(cpg)
+    //    implicit val curResolve:ICallResolver  = NoResolve
+    //    import io.shiftleft.semanticcpg.language._
+    //    for (m <- semMethods) {
+    //      println(m.m.name + " ==> " + m.m.start.callee.dumpRaw)
+    //    }
     val smItem = new SMItem(moduleMD, ListBuffer.empty)
     val magicSem = MagicSem(moduleMD, cpg, semMethods)
     smItem.appendSem(magicSem)
@@ -70,7 +76,7 @@ object SMItem {
       mkdir(dir)
     }
 
-    cpg.method.internal.foreach{ m =>
+    cpg.method.internal.foreach { m =>
       logger.info(m.name + "\n" + m.start.dumpRaw.mkString)
     }
 
@@ -78,15 +84,15 @@ object SMItem {
     logger.info(s)
 
     //    val semMethods = getSemMethods(cpg)
-//    for (m <- semMethods) {
-//      val method = m.m
-//      val s = method.start.dotCfg.l.head
-//      logger.info(method.start.dumpRaw.mkString)
-//      assert(s != null)
-//      val dotFilePath = dir / (m.m.name + ".dot")
-//      logger.info(s"${m.m.name} -> ${dotFilePath}")
-//      dotFilePath.write(s)
-//    }
+    //    for (m <- semMethods) {
+    //      val method = m.m
+    //      val s = method.start.dotCfg.l.head
+    //      logger.info(method.start.dumpRaw.mkString)
+    //      assert(s != null)
+    //      val dotFilePath = dir / (m.m.name + ".dot")
+    //      logger.info(s"${m.m.name} -> ${dotFilePath}")
+    //      dotFilePath.write(s)
+    //    }
   }
 
 }

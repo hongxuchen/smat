@@ -1,5 +1,6 @@
 package sg.edu.ntu.sems
 
+import io.shiftleft.semanticcpg.language.toNodeTypeStarters
 import io.shiftleft.semanticcpg.testfixtures.CodeToCpgSuite
 
 class SpecialCalleesSpec extends CodeToCpgSuite {
@@ -24,7 +25,10 @@ class SpecialCalleesSpec extends CodeToCpgSuite {
 
 
   "Special callees should be handled correctly" in {
-
+    val mainMethod = cpg.method("main").head()
+    val sCall = new SpecialCall(mainMethod)
+    sCall.syscallsCallees shouldBe Set.empty
+    sCall.stdlibCallees shouldBe Set("fprintf", "puts", "strcmp")
 
   }
 
